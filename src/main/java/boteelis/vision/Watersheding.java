@@ -78,7 +78,7 @@ public class Watersheding {
         int[] smoothed = new int[width*height];
         float[] gradient = new float[width*height];
         int[] seedRegions = new int[width*height];
-        int[] filledRegions = new int[width*height];
+        //int[] filledRegions = new int[width*height];
         int[] outputColors = ((DataBufferInt) outputImage.getRaster().getDataBuffer()).getData();
 
         smooth(width, height, inputColors, smoothed);
@@ -87,7 +87,7 @@ public class Watersheding {
 
         watershed(width, height, inputColors, gradient, seedRegions);
 
-        fillRegions(width, height, seedRegions, outputColors, 0.01f, 0.1f);
+        fillRegions(width, height, seedRegions, outputColors, 0.005f, 0.1f);
 
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
 
@@ -118,7 +118,7 @@ public class Watersheding {
             int y = (i -  x) / width;
 
             int minGradientIndex = getMinGradientIndex(width, height, gradient, x, y);
-            if (indexes2.contains(minGradientIndex)) {
+            if (i == minGradientIndex || indexes2.contains(minGradientIndex)) {
                 regionColor = inputColors[i];
                 break; // Returning back without finding region.
             }
@@ -132,10 +132,16 @@ public class Watersheding {
     }
 
     private static int getMinGradientIndex(int width, int height, float[] gradient, int x, int y) {
+        float currentGradient = getGradient(width, height, gradient, x, y);
         float topGradient = getGradient(width, height, gradient, x, y + 1);
         float bottomGradient = getGradient(width, height, gradient, x, y - 1);
         float leftGradient = getGradient(width, height, gradient, x - 1, y);
         float rightGradient = getGradient(width, height, gradient, x + 1, y);
+
+        if (currentGradient <= topGradient && currentGradient <= leftGradient && currentGradient <= bottomGradient
+                && currentGradient <= rightGradient) {
+            return x + y * width;
+        }
         if (topGradient < bottomGradient) {
             if (leftGradient < rightGradient) {
                 if (topGradient < leftGradient) {
@@ -196,79 +202,74 @@ public class Watersheding {
         int i0 = x0 + y0 * width;
         int fillColor = inputColors[i0];
 
-        ColorSum colorSum = new ColorSum();
-        colorSum.sumRed = (fillColor >> 16) & 0xff;
-        colorSum.sumGreen = (fillColor >> 8) & 0xff;
-        colorSum.sumBlue = (fillColor >> 0) & 0xff;
-        colorSum.count = 0;
-
-        final LinkedList<Integer> indexes = new LinkedList<Integer>();
-        indexes.push(i0);
+        final LinkedList<IndexPair> indexes = new LinkedList<IndexPair>();
+        indexes.push(new IndexPair(i0,i0));
         while (indexes.size() > 0) {
-            int i = indexes.pop();
-            int x = i % width;
-            int y = (i -  x) / width;
+            IndexPair indexPair = indexes.pop();
+            int lastIndex = indexPair.source;
+            int currentIndex = indexPair.target;
+            int x = currentIndex % width;
+            int y = (currentIndex -  x) / width;
             if (x > 0 && x < width - 1 && y > 0 && y < height - 1) {
-                if (isSameRegion(width, height, inputColors, colorSum, x, y, hueTolerance, brightnessTolerance)) {
-                    outputColors[i] = fillColor;
+                if (isSameRegion(inputColors[lastIndex], inputColors[currentIndex], hueTolerance, brightnessTolerance)) {
+                    outputColors[currentIndex] = fillColor;
                     if (outputColors[(x + 1) + (y) * width] == 0) {
-                        indexes.push((x + 1) + (y) * width);
+                        indexes.push(new IndexPair(currentIndex, (x + 1) + (y) * width));
                     }
                     if (outputColors[(x - 1) + (y) * width] == 0) {
-                        indexes.push((x - 1) + (y) * width);
+                        indexes.push(new IndexPair(currentIndex,(x - 1) + (y) * width));
                     }
                     if (outputColors[(x) + (y + 1) * width] == 0) {
-                        indexes.push((x) + (y + 1) * width);
+                        indexes.push(new IndexPair(currentIndex,(x) + (y + 1) * width));
                     }
                     if (outputColors[(x) + (y - 1) * width] == 0) {
-                        indexes.push((x) + (y - 1) * width);
+                        indexes.push(new IndexPair(currentIndex,(x) + (y - 1) * width));
                     }
                 }
             }
         }
     }
 
-    private static boolean isSameRegion(int width, int height, int[] inputColors, ColorSum colorSum, int x, int y, float hueTolerance, float brightnessTolerance) {
-        int i = x + y * width;
-        if (i >= 0 && i < width * height) {
-            float red0 = colorSum.sumRed;
-            float green0 = colorSum.sumGreen;
-            float blue0 = colorSum.sumBlue;
-            //float average0 = (red0 + green0 + blue0) / 3;
-            float brightness0 = Math.max(Math.max(red0, green0), blue0);
-            float redHue0 = red0 / brightness0;
-            float greenHue0 = green0 / brightness0;
-            float blueHue0 = blue0 / brightness0;
+    private static class IndexPair {
+        public IndexPair(int source, int target) {
+            this.source = source;
+            this.target = target;
+        }
+        public int source;
+        public int target;
+    }
 
-            int inputColor = inputColors[i];
-            float red = (inputColor >> 16) & 0xff;
-            float green = (inputColor >> 8) & 0xff;
-            float blue = (inputColor >> 0) & 0xff;
-            //float average = (red + green + blue) / 3;
-            float brightness = Math.max(Math.max(red, green), blue);
-            float redHue = red / brightness;
-            float greenHue = green / brightness;
-            float blueHue = blue / brightness;
+    private static boolean isSameRegion(int color0, int color1, float hueTolerance, float brightnessTolerance) {
+        if (color0 == color1) {
+            return true;
+        }
+        float red0 = (color0 >> 16) & 0xff;;
+        float green0 = (color0 >> 8) & 0xff;;
+        float blue0 = (color0 >> 0) & 0xff;;
+        float brightness0 = Math.max(Math.max(red0, green0), blue0);
+        float redHue0 = red0 / brightness0;
+        float greenHue0 = green0 / brightness0;
+        float blueHue0 = blue0 / brightness0;
 
-            float hueDelta = (Math.abs(redHue - redHue0) + Math.abs(greenHue - greenHue0) + Math.abs(blueHue - blueHue0)) / 3;
-            float brightnessDelta = Math.abs(brightness - brightness0) / 255f;
+        float red = (color1 >> 16) & 0xff;
+        float green = (color1 >> 8) & 0xff;
+        float blue = (color1 >> 0) & 0xff;
+        float brightness = Math.max(Math.max(red, green), blue);
+        float redHue = red / brightness;
+        float greenHue = green / brightness;
+        float blueHue = blue / brightness;
 
-            colorSum.sumRed = (red0 * colorSum.count + red) / (colorSum.count + 1);
-            colorSum.sumGreen = (green0 * colorSum.count + green) / (colorSum.count + 1);
-            colorSum.sumBlue = (blue0 * colorSum.count + blue) / (colorSum.count + 1);
-            colorSum.count = colorSum.count + 1;
+        float hueDelta = (Math.abs(redHue - redHue0) + Math.abs(greenHue - greenHue0) + Math.abs(blueHue - blueHue0)) / 3;
+        float brightnessDelta = Math.abs(brightness - brightness0) / 255f;
 
-            if (brightness0 > 10 && brightness > 10) {
-                if (hueDelta < hueTolerance && brightnessDelta < brightnessTolerance) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if (brightness0 <= 10 && brightness <= 10) {
+        if (brightness0 > 10 && brightness > 10) {
+            if (hueDelta < hueTolerance && brightnessDelta < brightnessTolerance) {
                 return true;
             } else {
                 return false;
             }
+        } else if (brightness0 <= 10 && brightness <= 10) {
+            return true;
         } else {
             return false;
         }
