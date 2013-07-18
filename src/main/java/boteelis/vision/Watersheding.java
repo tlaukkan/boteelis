@@ -85,9 +85,9 @@ public class Watersheding {
 
         gradient(width, height, smoothed, gradient);
 
-        //seedRegions(width, height, inputColors, seedRegions, 0.018f, 0.3f);
-        //fillRegions(width, height, seedRegions, filledRegions); // Can this be done in previous step?
-        watershed(width, height, inputColors, gradient, outputColors); // Can this be done in previous step?
+        watershed(width, height, inputColors, gradient, seedRegions);
+
+        fillRegions(width, height, seedRegions, outputColors, 0.01f, 0.1f);
 
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
 
@@ -117,46 +117,16 @@ public class Watersheding {
             int x = i % width;
             int y = (i -  x) / width;
 
-            /*float g = gradient[i];
-            if (g < 0) {
-                g = 0;
-            }
-            if (g > 255) {
-                g = 255;
-            }
-            int outputColor = (int) 255;
-            outputColor = (outputColor << 8) + (int) (g);
-            outputColor = (outputColor << 8) + (int) (0);
-            outputColor = (outputColor << 8) + (int) (0);
-            outputColors[i] = (int) outputColor;*/
-
             int minGradientIndex = getMinGradientIndex(width, height, gradient, x, y);
             if (indexes2.contains(minGradientIndex)) {
                 regionColor = inputColors[i];
                 break; // Returning back without finding region.
             }
-            /*if (inputColors[minGradientIndex] != 0) {
-                regionColor = inputColors[minGradientIndex];
-                break;
-            }*/
+
             indexes.push(minGradientIndex);
             indexes2.add(minGradientIndex);
         }
         for (int i : indexes2) {
-            /*float g = gradient[i];
-            if (g < 0) {
-                g = 0;
-            }
-            if (g > 255) {
-                g = 255;
-            }
-            int outputColor = (int) 255;
-            outputColor = (outputColor << 8) + (int) (g);
-            outputColor = (outputColor << 8) + (int) (0);
-            outputColor = (outputColor << 8) + (int) (g);
-            outputColors[i] = (int) outputColor;*/
-
-
             outputColors[i] = regionColor;
         }
     }
@@ -206,13 +176,13 @@ public class Watersheding {
         }
     }
 
-    private static void fillRegions(int width, int height, int[] inputColors, int[] outputColors) {
+    private static void fillRegions(int width, int height, int[] inputColors, int[] outputColors, float hueTolerance, float brightnessTolerance) {
         int colorIndex = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
-                if (inputColors[i] != 0 && outputColors[i] == 0) {
-                    fillRegion(width, height, inputColors, outputColors, x, y, colors[colorIndex]);
+                if (outputColors[i] == 0) {
+                    fillRegion(width, height, inputColors, outputColors, x, y, hueTolerance, brightnessTolerance);
                     colorIndex++;
                     if (colorIndex == colors.length) {
                         colorIndex = 0;
@@ -222,8 +192,16 @@ public class Watersheding {
         }
     }
 
-    private static void fillRegion(int width, int height, int[] inputColors, int[] outputColors, int x0, int y0, int fillColor) {
+    private static void fillRegion(int width, int height, int[] inputColors, int[] outputColors, int x0, int y0, float hueTolerance, float brightnessTolerance) {
         int i0 = x0 + y0 * width;
+        int fillColor = inputColors[i0];
+
+        ColorSum colorSum = new ColorSum();
+        colorSum.sumRed = (fillColor >> 16) & 0xff;
+        colorSum.sumGreen = (fillColor >> 8) & 0xff;
+        colorSum.sumBlue = (fillColor >> 0) & 0xff;
+        colorSum.count = 0;
+
         final LinkedList<Integer> indexes = new LinkedList<Integer>();
         indexes.push(i0);
         while (indexes.size() > 0) {
@@ -231,7 +209,7 @@ public class Watersheding {
             int x = i % width;
             int y = (i -  x) / width;
             if (x > 0 && x < width - 1 && y > 0 && y < height - 1) {
-                if (inputColors[i] != 0 && outputColors[i] == 0) {
+                if (isSameRegion(width, height, inputColors, colorSum, x, y, hueTolerance, brightnessTolerance)) {
                     outputColors[i] = fillColor;
                     if (outputColors[(x + 1) + (y) * width] == 0) {
                         indexes.push((x + 1) + (y) * width);
@@ -250,56 +228,13 @@ public class Watersheding {
         }
     }
 
-    private static void seedRegions(int width, int height, int[] inputColors, int[] outputColors, float hueTolerance, float brightnessTolerance) {
-        for (int x = 0; x < width; x++) {
-
-            for (int y = 0; y < height; y++) {
-                boolean seedRegionPixel = true;
-                seedRegionPixel &= isSameRegion(width, height, inputColors, x, y, x - 1, y, hueTolerance, brightnessTolerance);
-                seedRegionPixel &= isSameRegion(width, height, inputColors, x, y, x, y - 1, hueTolerance, brightnessTolerance);
-                seedRegionPixel &= isSameRegion(width, height, inputColors, x, y, x + 1, y, hueTolerance, brightnessTolerance);
-                seedRegionPixel &= isSameRegion(width, height, inputColors, x, y, x, y + 1, hueTolerance, brightnessTolerance);
-
-                if (seedRegionPixel) {
-                    if (outputColors[x + y * width] == 0) {
-                        outputColors[x + y * width] = inputColors[x + y * width];
-                    }
-                } else {
-                    outputColors[x + y * width] = 0;
-                    /*setColor(width, height, outputColors, x - 1, y, 0, 0, 0, 0);
-                    setColor(width, height, outputColors, x, y - 1, 0, 0, 0, 0);
-                    setColor(width, height, outputColors, x + 1, y, 0, 0, 0, 0);
-                    setColor(width, height, outputColors, x, y + 1, 0, 0, 0, 0);*/
-
-                    /*setColor(width, height, outputColors, x - 1, y - 1, 0, 0, 0);
-                    setColor(width, height, outputColors, x + 1, y - 1, 0, 0, 0);
-                    setColor(width, height, outputColors, x - 1, y + 1, 0, 0, 0);
-                    setColor(width, height, outputColors, x + 1, y + 1, 0, 0, 0);*/
-                }
-            }
-        }
-    }
-
-    private static void setColor(int width, int height, int[] outputColors, int x, int y, float red, float green, float blue, float alpha) {
+    private static boolean isSameRegion(int width, int height, int[] inputColors, ColorSum colorSum, int x, int y, float hueTolerance, float brightnessTolerance) {
         int i = x + y * width;
         if (i >= 0 && i < width * height) {
-            int outputColor = (int) alpha;
-            outputColor = (outputColor << 8) + (int) (red);
-            outputColor = (outputColor << 8) + (int) (green);
-            outputColor = (outputColor << 8) + (int) (blue);
-            outputColors[i] = outputColor;
-        }
-    }
-
-    private static boolean isSameRegion(int width, int height, int[] inputColors, int x0, int y0, int x, int y, float hueTolerance, float brightnessTolerance) {
-        int i0 = x0 + y0 * width;
-        int i = x + y * width;
-        if (i >= 0 && i < width * height) {
-            int inputColor0 = inputColors[i0];
-            float red0 = (inputColor0 >> 16) & 0xff;
-            float green0 = (inputColor0 >> 8) & 0xff;
-            float blue0 = (inputColor0 >> 0) & 0xff;
-            float average0 = (red0 + green0 + blue0) / 3;
+            float red0 = colorSum.sumRed;
+            float green0 = colorSum.sumGreen;
+            float blue0 = colorSum.sumBlue;
+            //float average0 = (red0 + green0 + blue0) / 3;
             float brightness0 = Math.max(Math.max(red0, green0), blue0);
             float redHue0 = red0 / brightness0;
             float greenHue0 = green0 / brightness0;
@@ -309,7 +244,7 @@ public class Watersheding {
             float red = (inputColor >> 16) & 0xff;
             float green = (inputColor >> 8) & 0xff;
             float blue = (inputColor >> 0) & 0xff;
-            float average = (red + green + blue) / 3;
+            //float average = (red + green + blue) / 3;
             float brightness = Math.max(Math.max(red, green), blue);
             float redHue = red / brightness;
             float greenHue = green / brightness;
@@ -317,6 +252,11 @@ public class Watersheding {
 
             float hueDelta = (Math.abs(redHue - redHue0) + Math.abs(greenHue - greenHue0) + Math.abs(blueHue - blueHue0)) / 3;
             float brightnessDelta = Math.abs(brightness - brightness0) / 255f;
+
+            colorSum.sumRed = (red0 * colorSum.count + red) / (colorSum.count + 1);
+            colorSum.sumGreen = (green0 * colorSum.count + green) / (colorSum.count + 1);
+            colorSum.sumBlue = (blue0 * colorSum.count + blue) / (colorSum.count + 1);
+            colorSum.count = colorSum.count + 1;
 
             if (brightness0 > 10 && brightness > 10) {
                 if (hueDelta < hueTolerance && brightnessDelta < brightnessTolerance) {
