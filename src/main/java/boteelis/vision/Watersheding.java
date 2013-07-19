@@ -203,7 +203,7 @@ public class Watersheding {
         }
     }
 
-    private static boolean isSameRegion(int color0, int color1, float hueTolerance, float brightnessTolerance) {
+    public static boolean isSameRegion(int color0, int color1, float hueTolerance, float brightnessTolerance) {
         if (color0 == color1) {
             return true;
         }
@@ -303,7 +303,7 @@ public class Watersheding {
         }
     }
 
-    private static void smooth(int width, int height, int[] inputColors, int[] outputColors) {
+    public static void smooth(int width, int height, int[] inputColors, int[] outputColors) {
         for (int x = 0; x < width; x++) {
 
             for (int y = 0; y < height; y++) {
