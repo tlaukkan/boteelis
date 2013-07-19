@@ -15,114 +15,114 @@ import java.util.*;
 public class StereoCorrelation {
 
     public static void main(final String[] args) throws IOException {
-        BufferedImage inputImage = ImageStorage.readImage("src/test/resources/vision/lion_right.png");
+        BufferedImage leftImage = ImageStorage.readImage("src/test/resources/vision/lion_left.png");
+        BufferedImage rightImage = ImageStorage.readImage("src/test/resources/vision/lion_right.png");
 
-        int width = inputImage.getWidth();
-        int height = inputImage.getHeight();
+        BufferedImage outputImage = new BufferedImage(rightImage.getWidth(),rightImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
 
-        BufferedImage outputImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
+        int width = rightImage.getWidth();
+        int height = rightImage.getHeight();
+
 
         long startTimeMillis = System.currentTimeMillis();
 
-        int[] inputColors = ((DataBufferInt) inputImage.getRaster().getDataBuffer()).getData();
-        int[] smoothedColors = new int[width*height];
+        int[] leftColors = ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData();
+        int[] rightColors = ((DataBufferInt) rightImage.getRaster().getDataBuffer()).getData();
         int[] regionColors = new int[width*height];
         int[] outputColors = ((DataBufferInt) outputImage.getRaster().getDataBuffer()).getData();
         float[] gradient = new float[width*height];
 
-        //Watersheding.smooth(width, height, inputColors, smoothedColors);
-        Watersheding.gradient(width, height, inputColors, gradient);
-        Watersheding.watershed(width, height, inputColors, gradient, regionColors);
+        Watersheding.gradient(width, height, rightColors, gradient);
+        Watersheding.watershed(width, height, rightColors, gradient, regionColors);
 
         final LinkedList<Region> regions = new LinkedList<Region>();
         final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
-        analyzeRegions(width, height, inputColors, regionColors, regions, indexRegionMap, 0.01f, 0.01f);
-        //horizontalGradient(width, height, regions, gradient);
-        //renderGradient(width, height, gradient, outputColors);
-        //fillRegions(width, height, regions, outputColors, 0.005f, 0.1f);
+        analyzeRegions(width, height, rightColors, regionColors, regions, indexRegionMap, 0.015f, 0.015f);
+
+        int maxDx = width / 2;
+        for (Region region : regions) {
+            float minCorrelation = Float.MAX_VALUE;
+            float maxCorrelation = - Float.MAX_VALUE;
+            int maxCorrelationDx = -1;
+
+            for (int dx = 0; dx < maxDx; dx++) {
+                float correlation = 0;
+                for (int i : region.indexes) {
+                    int rx = i % width;
+                    int lx = rx - dx;
+                    if (lx >= 0) {
+                        correlation += colorCorrelation(leftColors[i - dx], rightColors[i]);
+                    }
+                }
+                if (correlation > maxCorrelation) {
+                    maxCorrelation = correlation;
+                    maxCorrelationDx = dx;
+                }
+                if (correlation < minCorrelation) {
+                    minCorrelation = correlation;
+                }
+            }
+
+            region.stereoCorrelationDeltaX = maxCorrelationDx;
+            region.stereoCorrelation = maxCorrelation / region.indexes.size();
+        }
+
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
         System.out.println("Regions: " + regions.size());
 
-        /*List<Region> removedRegions = new ArrayList<Region>();
-        // Optimizing regions
-        for (Region region : regions) {
-
-            if (region.indexes.size() < 3) {
-
-                Region closestNeighour = null;
-                float closestColorDistance = Float.MAX_VALUE;
-                for (Region neighbour : region.neighbours) {
-                    neighbour.neighbours.remove(region);
-                    float colorDistance = colorDistance(region.red, region.green, region.blue, neighbour.red, neighbour.blue, neighbour.green, 0.01f, 0.3f);
-                    if (closestNeighour == null || colorDistance < closestColorDistance) {
-                        closestColorDistance = colorDistance;
-                        closestNeighour = neighbour;
-                    }
-                }
-
-                if (closestNeighour != null) {
-                    removedRegions.add(region);
-                    for (int index : region.indexes) {
-                            indexRegionMap.put(index, closestNeighour);
-                            closestNeighour.indexes.add(index);
-                    }
-                    for (Region neighbour : region.neighbours) {
-                        if (closestNeighour != neighbour) {
-                            neighbour.neighbours.add(closestNeighour);
-                            closestNeighour.neighbours.add(neighbour);
-                        }
-                    }
-                }
-
-            }
-        }
-
-        for (final Region removedRegion : removedRegions) {
-            regions.remove(removedRegion);
-        }
-
-        System.out.println("Optimized regions: " + regions.size());*/
-
-        renderRegions(width, height,indexRegionMap, outputColors);
+        renderRegions(width, height,indexRegionMap, leftColors, outputColors);
 
         ImageStorage.writeImage("target/lion.png", outputImage);
     }
 
-    public static float colorDistance(float red0, float green0, float blue0, float red, float green, float blue, float hueTolerance, float brightnessTolerance) {
-        float brightness0 = Math.max(Math.max(red0, green0), blue0);
-        float redHue0 = red0 / brightness0;
-        float greenHue0 = green0 / brightness0;
-        float blueHue0 = blue0 / brightness0;
+    public static float colorCorrelation(int color0, int color1) {
+        if (color0 == color1) {
+            return 1;
+        }
+        float red0 = (color0 >> 16) & 0xff;;
+        float green0 = (color0 >> 8) & 0xff;;
+        float blue0 = (color0 >> 0) & 0xff;;
 
-        float brightness = Math.max(Math.max(red, green), blue);
-        float redHue = red / brightness;
-        float greenHue = green / brightness;
-        float blueHue = blue / brightness;
+        float red1 = (color1 >> 16) & 0xff;
+        float green1 = (color1 >> 8) & 0xff;
+        float blue1 = (color1 >> 0) & 0xff;
 
-        float hueDelta = (Math.abs(redHue - redHue0) + Math.abs(greenHue - greenHue0) + Math.abs(blueHue - blueHue0)) / 3;
-        float brightnessDelta = Math.abs(brightness - brightness0) / 255f;
-
-        return hueDelta / hueTolerance + brightnessDelta / brightnessTolerance;
+        return 1 - (Math.abs(red0 - red1) + Math.abs(green0 - green1) + Math.abs(blue0 - blue1)) / (255f * 3f);
     }
 
-
-    private static void renderRegions(int width, int height, Map<Integer, Region> indexRegionMap, int[] outputColors) {
+    private static void renderRegions(int width, int height, Map<Integer, Region> indexRegionMap, int[] leftColors, int[] outputColors) {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
                 Region region = indexRegionMap.get(i);
                 if (region != null) {
-                    int color = (int) 255;
-                    color = (color << 8) + (int) region.red;
-                    color = (color << 8) + (int) region.green;
-                    color = (color << 8) + (int) region.blue;
+                    /*int color = (int) 255;
+                    if (region.boundaryIndexes.contains(i)) {
+                        color = (color << 8) + (int) (2 * region.stereoCorrelationDeltaX);
+                        color = (color << 8) + (int) (0);
+                        color = (color << 8) + (int) (0);
+                    } else {
+                        color = (color << 8) + (int) region.red;
+                        color = (color << 8) + (int) region.green;
+                        color = (color << 8) + (int) region.blue;
+                    }
                     outputColors[i] = color;
+                    */
+                    int rx = (i - region.stereoCorrelationDeltaX) % width;
+                    if (rx > 0 && region.stereoCorrelation > 0.96f) {
+                        outputColors[i] = leftColors[i - region.stereoCorrelationDeltaX];
+                    } /*else {
+                        int color = (int) 255;
+                        color = (color << 8) + (int) (255);
+                        color = (color << 8) + (int) (0);
+                        color = (color << 8) + (int) (0);
+                        outputColors[i] = color;
+                    }*/
                 }
             }
         }
     }
-
 
     public static void analyzeRegions(int width, int height, int[] inputColors, int[] regionColors, List<Region> regions, Map<Integer, Region> indexRegionMap, float hueTolerance, float brightnessTolerance) {
 
@@ -180,30 +180,23 @@ public class StereoCorrelation {
                 }
             }
         }
-
-        /*if (region.indexes.size() <= 1) {
-            regions.remove(region);
-            for (int index : region.indexes) {
-                indexRegionMap.remove(index);
-            }
-        }*/
     }
 
     private static void pushIndex(int width, int height, int currentIndex, int x, int y, Region region, Map<Integer, Region> indexRegionMap,  LinkedList<IndexPair> indexes, boolean[] analyzed) {
             int nextIndex = x + y * width;
             if (analyzed[nextIndex]) {
-                return;
-            }
-            //if (!indexRegionMap.containsKey(nextIndex)) {
-                analyzed[nextIndex] = true;
-                indexes.push(new IndexPair(currentIndex, nextIndex));
-            /*} else {
                 Region peerRegion = indexRegionMap.get(nextIndex);
-                if (region != peerRegion) {
+                if (peerRegion != null && region != peerRegion) {
+                    region.boundaryIndexes.add(currentIndex);
                     region.neighbours.add(peerRegion);
                     peerRegion.neighbours.add(region);
+                    peerRegion.boundaryIndexes.add(nextIndex);
                 }
-            }*/
+                return;
+            }
+
+            analyzed[nextIndex] = true;
+            indexes.push(new IndexPair(currentIndex, nextIndex));
     }
 
     private static class Region {
@@ -214,11 +207,11 @@ public class StereoCorrelation {
         public float green;
         public float blue;
 
-        public float stereoDeltaX;
-        public float stereoDeltaY;
+        int stereoCorrelationDeltaX;
         public float stereoCorrelation;
 
         Set<Integer> indexes = new HashSet<Integer>();
+        Set<Integer> boundaryIndexes = new HashSet<Integer>();
         Set<Region> neighbours = new HashSet<Region>();
     }
 
