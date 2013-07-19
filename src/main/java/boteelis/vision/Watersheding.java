@@ -19,38 +19,6 @@ import java.util.Set;
  */
 public class Watersheding {
 
-    static int[] colors;
-    static Random random = new Random(0);
-
-    static {
-        int n = 2048;
-        colors = new int[n];
-        for(int i = 0; i < n; i++)
-        {
-            if (i == 0) {
-                colors[i] = generateRandomColor(null).getRGB();
-            } else {
-                colors[i] = generateRandomColor(new Color(colors[i - 1])).getRGB();
-            }
-        }
-    }
-
-    public static Color generateRandomColor(Color mix) {
-        int red = random.nextInt(256);
-        int green = random.nextInt(256);
-        int blue = random.nextInt(256);
-
-        // mix the color
-        if (mix != null) {
-            red = (red + mix.getRed()) / 2;
-            green = (green + mix.getGreen()) / 2;
-            blue = (blue + mix.getBlue()) / 2;
-        }
-
-        Color color = new Color(red, green, blue);
-        return color;
-    }
-
     public static void main(final String[] args) throws IOException {
 
         final String inputImageFile = args[0];
@@ -59,13 +27,13 @@ public class Watersheding {
         BufferedImage inputImage = ImageIO.read(new FileInputStream(inputImageFile));
 
         int type = inputImage.getType();
-        if(type!=BufferedImage.TYPE_INT_ARGB) {
-            BufferedImage tempImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
+        //if(type!=BufferedImage.TYPE_INT_ARGB) {
+            BufferedImage tempImage = new BufferedImage(640,480,BufferedImage.TYPE_INT_ARGB);
             Graphics g = tempImage.createGraphics();
-            g.drawImage(inputImage,0,0,null);
+            g.drawImage(inputImage,0,0,640,480,null);
             g.dispose();
             inputImage = tempImage;
-        }
+        //}
 
         int width = inputImage.getWidth();
         int height = inputImage.getHeight();
@@ -81,13 +49,13 @@ public class Watersheding {
         //int[] filledRegions = new int[width*height];
         int[] outputColors = ((DataBufferInt) outputImage.getRaster().getDataBuffer()).getData();
 
-        smooth(width, height, inputColors, smoothed);
+        //smooth(width, height, inputColors, smoothed);
 
-        gradient(width, height, smoothed, gradient);
+        gradient(width, height, inputColors, gradient);
 
-        watershed(width, height, inputColors, gradient, seedRegions);
+        watershed(width, height, inputColors, gradient, outputColors);
 
-        fillRegions(width, height, seedRegions, outputColors, 0.005f, 0.1f);
+        //fillRegions(width, height, seedRegions, outputColors, 0.005f, 0.1f);
 
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
 
@@ -95,20 +63,22 @@ public class Watersheding {
     }
 
     private static void watershed(int width, int height, int[] inputColors, float[] gradient, int[] outputColors) {
+        final LinkedList<Integer> indexes = new LinkedList<Integer>();
+        final Set<Integer> indexes2 = new HashSet<Integer>();
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
                 if (outputColors[i] == 0) {
-                    watershedPixel(width, height, inputColors, gradient, outputColors, x, y);
+                    watershedPixel(width, height, inputColors, gradient, outputColors, x, y, indexes, indexes2);
                 }
             }
         }
     }
 
-    private static void watershedPixel(int width, int height, int[] inputColors, float[] gradient, int[] outputColors, int x0, int y0) {
+    private static void watershedPixel(int width, int height, int[] inputColors, float[] gradient, int[] outputColors, int x0, int y0, LinkedList<Integer> indexes,
+        final Set<Integer> indexes2) {
         int i0 = x0 + y0 * width;
-        final LinkedList<Integer> indexes = new LinkedList<Integer>();
-        final Set<Integer> indexes2 = new HashSet<Integer>();
+
         indexes.push(i0);
         indexes2.add(i0);
         int regionColor = 0;
@@ -118,6 +88,10 @@ public class Watersheding {
             int y = (i -  x) / width;
 
             int minGradientIndex = getMinGradientIndex(width, height, gradient, x, y);
+            if (outputColors[i] != 0) {
+                regionColor = outputColors[i];
+                break;
+            }
             if (i == minGradientIndex || indexes2.contains(minGradientIndex)) {
                 regionColor = inputColors[i];
                 break; // Returning back without finding region.
@@ -129,6 +103,7 @@ public class Watersheding {
         for (int i : indexes2) {
             outputColors[i] = regionColor;
         }
+        indexes2.clear();
     }
 
     private static int getMinGradientIndex(int width, int height, float[] gradient, int x, int y) {
@@ -183,16 +158,16 @@ public class Watersheding {
     }
 
     private static void fillRegions(int width, int height, int[] inputColors, int[] outputColors, float hueTolerance, float brightnessTolerance) {
-        int colorIndex = 0;
+        //int colorIndex = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
                 if (outputColors[i] == 0) {
                     fillRegion(width, height, inputColors, outputColors, x, y, hueTolerance, brightnessTolerance);
-                    colorIndex++;
+                    /*colorIndex++;
                     if (colorIndex == colors.length) {
                         colorIndex = 0;
-                    }
+                    }*/
                 }
             }
         }
@@ -230,15 +205,6 @@ public class Watersheding {
         }
     }
 
-    private static class IndexPair {
-        public IndexPair(int source, int target) {
-            this.source = source;
-            this.target = target;
-        }
-        public int source;
-        public int target;
-    }
-
     private static boolean isSameRegion(int color0, int color1, float hueTolerance, float brightnessTolerance) {
         if (color0 == color1) {
             return true;
@@ -262,17 +228,17 @@ public class Watersheding {
         float hueDelta = (Math.abs(redHue - redHue0) + Math.abs(greenHue - greenHue0) + Math.abs(blueHue - blueHue0)) / 3;
         float brightnessDelta = Math.abs(brightness - brightness0) / 255f;
 
-        if (brightness0 > 10 && brightness > 10) {
+        /*if (brightness0 > 10 && brightness > 10) {*/
             if (hueDelta < hueTolerance && brightnessDelta < brightnessTolerance) {
                 return true;
             } else {
                 return false;
             }
-        } else if (brightness0 <= 10 && brightness <= 10) {
+        /*} else if (brightness0 <= 10 && brightness <= 10) {
             return true;
         } else {
             return false;
-        }
+        }*/
     }
 
     private static void gradient(int width, int height, int[] inputColors, float[] gradient) {
@@ -284,23 +250,13 @@ public class Watersheding {
 
                 gradientSample(width, height, inputColors, x, y, x + 1, y, colorSum, 1f);
                 gradientSample(width, height, inputColors, x, y, x, y + 1, colorSum, 1f);
+                gradientSample(width, height, inputColors, x, y, x - 1, y, colorSum, 1f);
+                gradientSample(width, height, inputColors, x, y, x, y - 1, colorSum, 1f);
+
                 gradientSample(width, height, inputColors, x, y, x + 1, y + 1, colorSum, 1f);
                 gradientSample(width, height, inputColors, x, y, x - 1, y + 1, colorSum, 1f);
                 gradientSample(width, height, inputColors, x, y, x + 1, y - 1, colorSum, 1f);
-                gradientSample(width, height, inputColors, x, y, x - 1, y, colorSum, 1f);
-                gradientSample(width, height, inputColors, x, y, x, y - 1, colorSum, 1f);
                 gradientSample(width, height, inputColors, x, y, x - 1, y - 1, colorSum, 1f);
-
-                /*gradientSample(width, height, inputColors, x, y, x - 2, y, colorSum, 1f);
-                gradientSample(width, height, inputColors, x, y, x, y - 2, colorSum, 1f);
-
-                gradientSample(width, height, inputColors, x, y, x - 2, y - 1, colorSum, 1f);
-                gradientSample(width, height, inputColors, x, y, x - 1, y - 2, colorSum, 1f);
-
-
-                gradientSample(width, height, inputColors, x, y, x - 3, y, colorSum, 1f);
-                gradientSample(width, height, inputColors, x, y, x, y - 3, colorSum, 1f);*/
-
 
                 colorSum.sumRed /= colorSum.count;
                 colorSum.sumGreen /= colorSum.count;
@@ -313,24 +269,24 @@ public class Watersheding {
         }
     }
 
-    private static void limit(ColorSum colorSum) {
-        if (colorSum.sumRed < 0) {
-            colorSum.sumRed = 0;
-        }
-        if (colorSum.sumRed > 255) {
-            colorSum.sumRed = 255;
-        }
-        if (colorSum.sumGreen < 0) {
-            colorSum.sumGreen = 0;
-        }
-        if (colorSum.sumGreen > 255) {
-            colorSum.sumGreen = 255;
-        }
-        if (colorSum.sumBlue < 0) {
-            colorSum.sumBlue = 0;
-        }
-        if (colorSum.sumBlue > 255) {
-            colorSum.sumBlue = 255;
+    private static void gradientSample(int width, int height, int[] inputColors, int x0, int y0, int x, int y, ColorSum colorSum, float weight) {
+        int i0 = x0 + y0 * width;
+        int i = x + y * width;
+        if (i >= 0 && i < width * height) {
+            int inputColor0 = inputColors[i0];
+            float red0 = (inputColor0 >> 16) & 0xff;
+            float green0 = (inputColor0 >> 8) & 0xff;
+            float blue0 = (inputColor0 >> 0) & 0xff;
+
+            int inputColor = inputColors[i];
+            float red = (inputColor >> 16) & 0xff;
+            float green = (inputColor >> 8) & 0xff;
+            float blue = (inputColor >> 0) & 0xff;
+
+            colorSum.sumRed += Math.abs(red - red0) * weight;
+            colorSum.sumGreen += Math.abs(green - green0) * weight;
+            colorSum.sumBlue += Math.abs(blue - blue0) * weight;
+            colorSum.count++;
         }
     }
 
@@ -365,27 +321,6 @@ public class Watersheding {
         }
     }
 
-    private static void gradientSample(int width, int height, int[] inputColors, int x0, int y0, int x, int y, ColorSum colorSum, float weight) {
-        int i0 = x0 + y0 * width;
-        int i = x + y * width;
-        if (i >= 0 && i < width * height) {
-            int inputColor0 = inputColors[i0];
-            float red0 = (inputColor0 >> 16) & 0xff;
-            float green0 = (inputColor0 >> 8) & 0xff;
-            float blue0 = (inputColor0 >> 0) & 0xff;
-
-            int inputColor = inputColors[i];
-            float red = (inputColor >> 16) & 0xff;
-            float green = (inputColor >> 8) & 0xff;
-            float blue = (inputColor >> 0) & 0xff;
-
-            colorSum.sumRed += Math.abs(red - red0) * weight;
-            colorSum.sumGreen += Math.abs(green - green0) * weight;
-            colorSum.sumBlue += Math.abs(blue - blue0) * weight;
-            colorSum.count++;
-        }
-    }
-
     private static void sumSample(int width, int height, int[] inputColors, int x, int y, ColorSum colorSum) {
         int i = x + y * width;
         if (i >= 0 && i < width * height) {
@@ -401,10 +336,52 @@ public class Watersheding {
         }
     }
 
+    private static class IndexPair {
+        public IndexPair(int source, int target) {
+            this.source = source;
+            this.target = target;
+        }
+        public int source;
+        public int target;
+    }
+
     private static class ColorSum {
         float sumRed = 0;
         float sumGreen = 0;
         float sumBlue = 0;
         int count = 0;
     }
+
+    /*static int[] colors;
+    static Random random = new Random(0);
+
+    static {
+        int n = 2048;
+        colors = new int[n];
+        for(int i = 0; i < n; i++)
+        {
+            if (i == 0) {
+                colors[i] = generateRandomColor(null).getRGB();
+            } else {
+                colors[i] = generateRandomColor(new Color(colors[i - 1])).getRGB();
+            }
+        }
+    }
+
+    public static Color generateRandomColor(Color mix) {
+        int red = random.nextInt(256);
+        int green = random.nextInt(256);
+        int blue = random.nextInt(256);
+
+        // mix the color
+        if (mix != null) {
+            red = (red + mix.getRed()) / 2;
+            green = (green + mix.getGreen()) / 2;
+            blue = (blue + mix.getBlue()) / 2;
+        }
+
+        Color color = new Color(red, green, blue);
+        return color;
+    }*/
+
 }
