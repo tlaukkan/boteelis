@@ -27,13 +27,13 @@ public class Watersheding {
         BufferedImage inputImage = ImageIO.read(new FileInputStream(inputImageFile));
 
         int type = inputImage.getType();
-        //if(type!=BufferedImage.TYPE_INT_ARGB) {
-            BufferedImage tempImage = new BufferedImage(640,480,BufferedImage.TYPE_INT_ARGB);
+        if(type!=BufferedImage.TYPE_INT_ARGB) {
+            BufferedImage tempImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
             Graphics g = tempImage.createGraphics();
-            g.drawImage(inputImage,0,0,640,480,null);
+            g.drawImage(inputImage,0,0,null);
             g.dispose();
             inputImage = tempImage;
-        //}
+        }
 
         int width = inputImage.getWidth();
         int height = inputImage.getHeight();
@@ -45,7 +45,7 @@ public class Watersheding {
         int[] inputColors = ((DataBufferInt) inputImage.getRaster().getDataBuffer()).getData();
         int[] smoothed = new int[width*height];
         float[] gradient = new float[width*height];
-        int[] seedRegions = new int[width*height];
+        int[] regions = new int[width*height];
         //int[] filledRegions = new int[width*height];
         int[] outputColors = ((DataBufferInt) outputImage.getRaster().getDataBuffer()).getData();
 
@@ -55,11 +55,35 @@ public class Watersheding {
 
         watershed(width, height, inputColors, gradient, outputColors);
 
-        //fillRegions(width, height, seedRegions, outputColors, 0.005f, 0.1f);
+        //horizontalGradient(width, height, regions, gradient);
+
+        //renderGradient(width, height, gradient, outputColors);
+        // fillRegions(width, height, regions, outputColors, 0.005f, 0.1f);
 
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
 
         ImageIO.write(outputImage, "png" ,new FileOutputStream(outputImageFile, false));
+    }
+
+    private static void renderGradient(int width, int height, float[] gradient, int[] outputColors) {
+        //int colorIndex = 0;
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int i = x + y * width;
+                float g = gradient[i];
+                if (g < 0) {
+                    g = 0;
+                }
+                if (g > 255) {
+                    g = 255;
+                }
+                int color = (int) 255;
+                color = (color << 8) + (int) g;
+                color = (color << 8) + (int) g;
+                color = (color << 8) + (int) g;
+                outputColors[i] = color;
+            }
+        }
     }
 
     private static void watershed(int width, int height, int[] inputColors, float[] gradient, int[] outputColors) {
@@ -268,6 +292,35 @@ public class Watersheding {
             }
         }
     }
+
+    private static void horizontalGradient(int width, int height, int[] inputColors, float[] gradient) {
+        for (int x = 0; x < width; x++) {
+
+            for (int y = 0; y < height; y++) {
+
+                final ColorSum colorSum = new ColorSum();
+
+                //gradientSample(width, height, inputColors, x, y, x + 1, y, colorSum, 1f);
+                //gradientSample(width, height, inputColors, x, y, x, y + 1, colorSum, 1f);
+                gradientSample(width, height, inputColors, x, y, x - 1, y, colorSum, 1f);
+                //gradientSample(width, height, inputColors, x, y, x, y - 1, colorSum, 1f);
+
+                //gradientSample(width, height, inputColors, x, y, x + 1, y + 1, colorSum, 1f);
+                //gradientSample(width, height, inputColors, x, y, x - 1, y + 1, colorSum, 1f);
+                //gradientSample(width, height, inputColors, x, y, x + 1, y - 1, colorSum, 1f);
+                //gradientSample(width, height, inputColors, x, y, x - 1, y - 1, colorSum, 1f);
+
+                colorSum.sumRed /= colorSum.count;
+                colorSum.sumGreen /= colorSum.count;
+                colorSum.sumBlue /= colorSum.count;
+
+                float sum = colorSum.sumRed + colorSum.sumGreen + colorSum.sumBlue;
+
+                gradient[x + y * width] = sum;
+            }
+        }
+    }
+
 
     private static void gradientSample(int width, int height, int[] inputColors, int x0, int y0, int x, int y, ColorSum colorSum, float weight) {
         int i0 = x0 + y0 * width;
