@@ -66,7 +66,6 @@ public class Watersheding {
     }
 
     private static void renderGradient(int width, int height, float[] gradient, int[] outputColors) {
-        //int colorIndex = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
@@ -182,16 +181,11 @@ public class Watersheding {
     }
 
     private static void fillRegions(int width, int height, int[] inputColors, int[] outputColors, float hueTolerance, float brightnessTolerance) {
-        //int colorIndex = 0;
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
                 if (outputColors[i] == 0) {
                     fillRegion(width, height, inputColors, outputColors, x, y, hueTolerance, brightnessTolerance);
-                    /*colorIndex++;
-                    if (colorIndex == colors.length) {
-                        colorIndex = 0;
-                    }*/
                 }
             }
         }
@@ -252,17 +246,11 @@ public class Watersheding {
         float hueDelta = (Math.abs(redHue - redHue0) + Math.abs(greenHue - greenHue0) + Math.abs(blueHue - blueHue0)) / 3;
         float brightnessDelta = Math.abs(brightness - brightness0) / 255f;
 
-        /*if (brightness0 > 10 && brightness > 10) {*/
-            if (hueDelta < hueTolerance && brightnessDelta < brightnessTolerance) {
-                return true;
-            } else {
-                return false;
-            }
-        /*} else if (brightness0 <= 10 && brightness <= 10) {
+        if (hueDelta < hueTolerance && brightnessDelta < brightnessTolerance) {
             return true;
         } else {
             return false;
-        }*/
+        }
     }
 
     private static void gradient(int width, int height, int[] inputColors, float[] gradient) {
@@ -300,15 +288,7 @@ public class Watersheding {
 
                 final ColorSum colorSum = new ColorSum();
 
-                //gradientSample(width, height, inputColors, x, y, x + 1, y, colorSum, 1f);
-                //gradientSample(width, height, inputColors, x, y, x, y + 1, colorSum, 1f);
                 gradientSample(width, height, inputColors, x, y, x - 1, y, colorSum, 1f);
-                //gradientSample(width, height, inputColors, x, y, x, y - 1, colorSum, 1f);
-
-                //gradientSample(width, height, inputColors, x, y, x + 1, y + 1, colorSum, 1f);
-                //gradientSample(width, height, inputColors, x, y, x - 1, y + 1, colorSum, 1f);
-                //gradientSample(width, height, inputColors, x, y, x + 1, y - 1, colorSum, 1f);
-                //gradientSample(width, height, inputColors, x, y, x - 1, y - 1, colorSum, 1f);
 
                 colorSum.sumRed /= colorSum.count;
                 colorSum.sumGreen /= colorSum.count;
@@ -404,37 +384,5 @@ public class Watersheding {
         float sumBlue = 0;
         int count = 0;
     }
-
-    /*static int[] colors;
-    static Random random = new Random(0);
-
-    static {
-        int n = 2048;
-        colors = new int[n];
-        for(int i = 0; i < n; i++)
-        {
-            if (i == 0) {
-                colors[i] = generateRandomColor(null).getRGB();
-            } else {
-                colors[i] = generateRandomColor(new Color(colors[i - 1])).getRGB();
-            }
-        }
-    }
-
-    public static Color generateRandomColor(Color mix) {
-        int red = random.nextInt(256);
-        int green = random.nextInt(256);
-        int blue = random.nextInt(256);
-
-        // mix the color
-        if (mix != null) {
-            red = (red + mix.getRed()) / 2;
-            green = (green + mix.getGreen()) / 2;
-            blue = (blue + mix.getBlue()) / 2;
-        }
-
-        Color color = new Color(red, green, blue);
-        return color;
-    }*/
 
 }
