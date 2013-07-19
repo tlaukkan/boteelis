@@ -143,8 +143,8 @@ public class Watersheding {
         float leftGradient = getGradient(width, height, gradient, x - 1, y);
         float rightGradient = getGradient(width, height, gradient, x + 1, y);
 
-        if (currentGradient <= topGradient && currentGradient <= leftGradient && currentGradient <= bottomGradient
-                && currentGradient <= rightGradient) {
+        if (currentGradient < topGradient && currentGradient < leftGradient && currentGradient < bottomGradient
+                && currentGradient < rightGradient) {
             return x + y * width;
         }
         if (topGradient < bottomGradient) {

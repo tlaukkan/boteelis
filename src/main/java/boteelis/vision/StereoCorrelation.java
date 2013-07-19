@@ -37,7 +37,7 @@ public class StereoCorrelation {
         final LinkedList<Region> regions = new LinkedList<Region>();
         final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
-        analyzeRegions(width, height, inputColors, regionColors, regions, indexRegionMap, 0.01f, 0.3f);
+        analyzeRegions(width, height, inputColors, regionColors, regions, indexRegionMap, 0.01f, 0.01f);
         //horizontalGradient(width, height, regions, gradient);
         //renderGradient(width, height, gradient, outputColors);
         //fillRegions(width, height, regions, outputColors, 0.005f, 0.1f);
@@ -126,18 +126,20 @@ public class StereoCorrelation {
 
     public static void analyzeRegions(int width, int height, int[] inputColors, int[] regionColors, List<Region> regions, Map<Integer, Region> indexRegionMap, float hueTolerance, float brightnessTolerance) {
 
+        final boolean[] analyzed = new boolean[width * height];
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
-                if (!indexRegionMap.containsKey(i)) {
-                    analyzeRegion(width, height, inputColors, regionColors, x, y, regions, indexRegionMap, hueTolerance, brightnessTolerance);
+                if (!analyzed[i]) {
+                    analyzeRegion(width, height, inputColors, regionColors, x, y, regions, indexRegionMap, analyzed, hueTolerance, brightnessTolerance);
                 }
             }
         }
     }
 
-    private static void analyzeRegion(int width, int height, int[] inputColors, int[] regionColors, int x0, int y0, List<Region> regions, Map<Integer, Region> indexRegionMap, float hueTolerance, float brightnessTolerance) {
+    private static void analyzeRegion(int width, int height, int[] inputColors, int[] regionColors, int x0, int y0, List<Region> regions, Map<Integer, Region> indexRegionMap, boolean[] analyzed, float hueTolerance, float brightnessTolerance) {
         int i0 = x0 + y0 * width;
+
         int regionColor = regionColors[i0];
 
         Region region = new Region();
@@ -145,6 +147,8 @@ public class StereoCorrelation {
 
         final LinkedList<IndexPair> indexes = new LinkedList<IndexPair>();
         indexes.push(new IndexPair(i0,i0));
+        analyzed[i0] = true;
+
         while (indexes.size() > 0) {
             IndexPair indexPair = indexes.pop();
             int lastIndex = indexPair.source;
@@ -152,26 +156,27 @@ public class StereoCorrelation {
             int x = currentIndex % width;
             int y = (currentIndex -  x) / width;
             if (!indexRegionMap.containsKey(currentIndex) && x > -1 && x < width && y > -1 && y < height) {
-                if (regionColor == regionColors[currentIndex]) {
-                //if (Watersheding.isSameRegion(regionColors[lastIndex], regionColors[currentIndex], hueTolerance, brightnessTolerance)) {
+                //if (regionColor == regionColors[currentIndex]) {
+                if (Watersheding.isSameRegion(regionColor, regionColors[currentIndex], hueTolerance, brightnessTolerance)) {
 
                     int size = region.indexes.size();
-
                     region.x = (region.x * size + x) / (size + 1);
                     region.y = (region.y * size + y) / (size + 1);
-
                     region.red = (region.red * size + ((regionColors[currentIndex] >> 16) & 0xff)) / (size + 1);
                     region.green = (region.green * size + ((regionColors[currentIndex] >> 8) & 0xff)) / (size + 1);
                     region.blue = (region.blue * size + ((regionColors[currentIndex] >> 0) & 0xff)) / (size + 1);
 
                     region.indexes.add(currentIndex);
-
                     indexRegionMap.put(currentIndex, region);
 
-                    pushIndex(width, height, currentIndex, x + 1, y, region, indexRegionMap, indexes);
-                    pushIndex(width, height, currentIndex, x - 1, y, region, indexRegionMap, indexes);
-                    pushIndex(width, height, currentIndex, y + 1, y, region, indexRegionMap, indexes);
-                    pushIndex(width, height, currentIndex, y - 1, y, region, indexRegionMap, indexes);
+                    if (x > 0 && x < width - 1 && y > 0 && y < height - 1) {
+                        pushIndex(width, height, currentIndex, x + 1, y, region, indexRegionMap, indexes, analyzed);
+                        pushIndex(width, height, currentIndex, x - 1, y, region, indexRegionMap, indexes, analyzed);
+                        pushIndex(width, height, currentIndex, x, y + 1, region, indexRegionMap, indexes, analyzed);
+                        pushIndex(width, height, currentIndex, x, y - 1, region, indexRegionMap, indexes, analyzed);
+                    }
+                } else {
+                    analyzed[currentIndex] = false;
                 }
             }
         }
@@ -184,22 +189,21 @@ public class StereoCorrelation {
         }*/
     }
 
-    private static void pushIndex(int width, int height, int currentIndex, int x, int y, Region region, Map<Integer, Region> indexRegionMap,  LinkedList<IndexPair> indexes) {
-        if (x > -1 && x < width && y > -1 && y < height) {
+    private static void pushIndex(int width, int height, int currentIndex, int x, int y, Region region, Map<Integer, Region> indexRegionMap,  LinkedList<IndexPair> indexes, boolean[] analyzed) {
             int nextIndex = x + y * width;
-            if (indexes.contains(nextIndex)) {
+            if (analyzed[nextIndex]) {
                 return;
             }
-            if (!indexRegionMap.containsKey(nextIndex)) {
+            //if (!indexRegionMap.containsKey(nextIndex)) {
+                analyzed[nextIndex] = true;
                 indexes.push(new IndexPair(currentIndex, nextIndex));
-            } else {
+            /*} else {
                 Region peerRegion = indexRegionMap.get(nextIndex);
                 if (region != peerRegion) {
                     region.neighbours.add(peerRegion);
                     peerRegion.neighbours.add(region);
                 }
-            }
-        }
+            }*/
     }
 
     private static class Region {
