@@ -20,20 +20,7 @@ import java.util.Set;
 public class Watersheding {
 
     public static void main(final String[] args) throws IOException {
-
-        final String inputImageFile = args[0];
-        final String outputImageFile = args[1];
-
-        BufferedImage inputImage = ImageIO.read(new FileInputStream(inputImageFile));
-
-        int type = inputImage.getType();
-        if(type!=BufferedImage.TYPE_INT_ARGB) {
-            BufferedImage tempImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
-            Graphics g = tempImage.createGraphics();
-            g.drawImage(inputImage,0,0,null);
-            g.dispose();
-            inputImage = tempImage;
-        }
+        BufferedImage inputImage = ImageStorage.readImage(args[0]);
 
         int width = inputImage.getWidth();
         int height = inputImage.getHeight();
@@ -43,26 +30,19 @@ public class Watersheding {
         long startTimeMillis = System.currentTimeMillis();
 
         int[] inputColors = ((DataBufferInt) inputImage.getRaster().getDataBuffer()).getData();
-        int[] smoothed = new int[width*height];
-        float[] gradient = new float[width*height];
-        int[] regions = new int[width*height];
-        //int[] filledRegions = new int[width*height];
         int[] outputColors = ((DataBufferInt) outputImage.getRaster().getDataBuffer()).getData();
+        float[] gradient = new float[width*height];
 
         //smooth(width, height, inputColors, smoothed);
-
         gradient(width, height, inputColors, gradient);
-
         watershed(width, height, inputColors, gradient, outputColors);
-
         //horizontalGradient(width, height, regions, gradient);
-
         //renderGradient(width, height, gradient, outputColors);
-        // fillRegions(width, height, regions, outputColors, 0.005f, 0.1f);
+        //fillRegions(width, height, regions, outputColors, 0.005f, 0.1f);
 
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
 
-        ImageIO.write(outputImage, "png" ,new FileOutputStream(outputImageFile, false));
+        ImageStorage.writeImage(args[1], outputImage);
     }
 
     private static void renderGradient(int width, int height, float[] gradient, int[] outputColors) {
