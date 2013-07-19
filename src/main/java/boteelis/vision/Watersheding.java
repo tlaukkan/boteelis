@@ -65,7 +65,7 @@ public class Watersheding {
         }
     }
 
-    private static void watershed(int width, int height, int[] inputColors, float[] gradient, int[] outputColors) {
+    public static void watershed(int width, int height, int[] inputColors, float[] gradient, int[] outputColors) {
         final LinkedList<Integer> indexes = new LinkedList<Integer>();
         final Set<Integer> indexes2 = new HashSet<Integer>();
         for (int x = 0; x < width; x++) {
@@ -233,7 +233,7 @@ public class Watersheding {
         }
     }
 
-    private static void gradient(int width, int height, int[] inputColors, float[] gradient) {
+    public static void gradient(int width, int height, int[] inputColors, float[] gradient) {
         for (int x = 0; x < width; x++) {
 
             for (int y = 0; y < height; y++) {
