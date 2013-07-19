@@ -1,16 +1,9 @@
 package boteelis.vision;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Image region growing example.
@@ -93,10 +86,12 @@ public class Watersheding {
             int minGradientIndex = getMinGradientIndex(width, height, gradient, x, y);
             if (outputColors[i] != 0) {
                 regionColor = outputColors[i];
+                //reverseWatershedPixel(width, height, inputColors, gradient, outputColors, x, y, indexes, indexes2);
                 break;
             }
             if (i == minGradientIndex || indexes2.contains(minGradientIndex)) {
                 regionColor = inputColors[i];
+                //reverseWatershedPixel(width, height, inputColors, gradient, outputColors, x, y, indexes, indexes2);
                 break; // Returning back without finding region.
             }
 
@@ -107,6 +102,38 @@ public class Watersheding {
             outputColors[i] = regionColor;
         }
         indexes2.clear();
+    }
+
+    private static void reverseWatershedPixel(int width, int height, int[] inputColors, float[] gradient, int[] outputColors, int x0, int y0, LinkedList<Integer> indexes,
+                                       final Set<Integer> indexes2) {
+        int i0 = x0 + y0 * width;
+
+        indexes.push(i0);
+        //indexes2.add(i0);
+        while (indexes.size() > 0) {
+            int i = indexes.pop();
+            int x = i % width;
+            int y = (i -  x) / width;
+            pushIndexIfGreaterGradient(width, height, gradient[i], x - 1, y, gradient, indexes, indexes2);
+            pushIndexIfGreaterGradient(width, height, gradient[i], x + 1, y, gradient, indexes, indexes2);
+            pushIndexIfGreaterGradient(width, height, gradient[i], x, y - 1, gradient, indexes, indexes2);
+            pushIndexIfGreaterGradient(width, height, gradient[i], x, y + 1, gradient, indexes, indexes2);
+        }
+    }
+
+    private static void pushIndexIfGreaterGradient(int width, int height, float currentGradient, int x, int y, float[] gradient, LinkedList<Integer> indexes,
+                                                   final Set<Integer> indexes2) {
+        if (x > -1 && x < width && y > -1 && y < height) {
+            int nextIndex = x + y * width;
+            if (gradient[nextIndex] < currentGradient) {
+                return;
+            }
+            if (indexes2.contains(nextIndex) || indexes.contains(nextIndex)) {
+                return;
+            }
+            indexes.push(nextIndex);
+            indexes2.add(nextIndex);
+        }
     }
 
     private static int getMinGradientIndex(int width, int height, float[] gradient, int x, int y) {
