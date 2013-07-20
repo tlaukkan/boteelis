@@ -1,4 +1,4 @@
-package boteelis.vision;
+package boteelis.vision.model;
 
 /**
  * Created with IntelliJ IDEA.

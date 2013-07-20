@@ -1,5 +1,8 @@
 package boteelis.vision;
 
+import boteelis.vision.model.IndexPair;
+import boteelis.vision.model.Region;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.IOException;
@@ -197,22 +200,6 @@ public class StereoCorrelation {
 
             analyzed[nextIndex] = true;
             indexes.push(new IndexPair(currentIndex, nextIndex));
-    }
-
-    private static class Region {
-        public float x;
-        public float y;
-
-        public float red;
-        public float green;
-        public float blue;
-
-        int stereoCorrelationDeltaX;
-        public float stereoCorrelation;
-
-        Set<Integer> indexes = new HashSet<Integer>();
-        Set<Integer> boundaryIndexes = new HashSet<Integer>();
-        Set<Region> neighbours = new HashSet<Region>();
     }
 
 }

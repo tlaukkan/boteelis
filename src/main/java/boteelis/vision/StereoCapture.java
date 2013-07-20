@@ -21,6 +21,8 @@ public class StereoCapture {
         int height = 480;
         JFrame frame = new JFrame();
         frame.setSize(2 * width, height);
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setTitle("System LAF Demo");
 
