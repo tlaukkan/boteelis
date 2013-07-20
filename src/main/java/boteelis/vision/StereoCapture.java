@@ -3,6 +3,7 @@ package boteelis.vision;
 import com.github.sarxos.webcam.Webcam;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
@@ -16,19 +17,41 @@ import java.io.File;
 public class StereoCapture {
 
     public static void main(String[] args) throws Exception {
+        int width = 640;
+        int height = 480;
+        JFrame frame = new JFrame();
+        frame.setSize(2 * width, height);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("System LAF Demo");
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
+
+        SwingUtilities.updateComponentTreeUI(frame);
+
+        frame.setVisible(true);
 
         Webcam webcam1 = Webcam.getWebcams().get(0);
         Webcam webcam2 = Webcam.getWebcams().get(1);
-        webcam1.setViewSize(new Dimension(640, 480));
+        webcam1.setViewSize(new Dimension(width, height));
         webcam1.open();
-        webcam2.setViewSize(new Dimension(640, 480));
+        webcam2.setViewSize(new Dimension(width, height));
         webcam2.open();
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             long startTimeMillis = System.currentTimeMillis();
-            webcam1.getImage();
-            webcam2.getImage();
-            System.out.println(i + ") " + (System.currentTimeMillis() - startTimeMillis) + " ms.");
+            frame.getContentPane().getGraphics().drawImage(webcam1.getImage(), 0, 0, null);
+            frame.getContentPane().getGraphics().drawImage(webcam2.getImage(), width, 0, null);
+            System.out.println((System.currentTimeMillis() - startTimeMillis) + " ms.");
         }
 
         webcam1.close();
