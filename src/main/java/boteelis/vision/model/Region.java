@@ -1,7 +1,5 @@
 package boteelis.vision.model;
 
-import boteelis.vision.StereoCorrelation;
-
 import java.util.HashSet;
 import java.util.Set;
 

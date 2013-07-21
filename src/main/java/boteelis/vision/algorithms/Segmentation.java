@@ -1,4 +1,4 @@
-package boteelis.vision;
+package boteelis.vision.algorithms;
 
 import javax.imageio.ImageIO;
 import java.awt.Graphics;

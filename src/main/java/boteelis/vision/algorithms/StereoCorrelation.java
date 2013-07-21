@@ -1,4 +1,4 @@
-package boteelis.vision;
+package boteelis.vision.algorithms;
 
 import boteelis.vision.model.IndexPair;
 import boteelis.vision.model.Region;

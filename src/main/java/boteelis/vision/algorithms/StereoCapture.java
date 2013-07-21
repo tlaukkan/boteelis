@@ -1,4 +1,4 @@
-package boteelis.vision;
+package boteelis.vision.algorithms;
 
 import com.github.sarxos.webcam.Webcam;
 
@@ -22,9 +22,9 @@ public class StereoCapture {
         JFrame frame = new JFrame();
         frame.setSize(2 * width, height);
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);
+        frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("System LAF Demo");
+        frame.setTitle("Stereo Capture");
 
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
