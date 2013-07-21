@@ -79,7 +79,7 @@ public class CaptureComponent {
     public void process() {
         while (!exited) {
             try {
-                if (context.capturedFrames.size() < 3) {
+                if (context.capturedFrames.size() < 1) {
                     final long captureBeginMillis = System.currentTimeMillis();
 
                     Future<BufferedImage> leftCamFuture = executor.submit(new Callable<BufferedImage>() {
@@ -118,7 +118,7 @@ public class CaptureComponent {
             } catch (InterruptedException e) {
                 logger.debug("Interrupted.");
             } catch (Exception e) {
-                logger.error("Error capturing image.", e);
+                logger.error("Error capturing frame.", e);
             }
         }
     }

@@ -18,17 +18,20 @@ public class VisionSystem {
     private VisionContext visionContext;
 
     private CaptureComponent captureComponent;
+    private AnalysisComponent analysisComponent;
     private VisualizationComponent visualizationComponent;
 
     private VisionSystem(int width, int height) {
         visionContext = new VisionContext(width, height, true);
         captureComponent = new CaptureComponent(visionContext);
+        analysisComponent = new AnalysisComponent(visionContext);
         visualizationComponent = new VisualizationComponent(visionContext);
     }
 
     public void startup() {
         try {
             captureComponent.startup();
+            analysisComponent.startup();
             visualizationComponent.startup();
         } catch (final Exception e) {
             throw new RuntimeException("Failed to startup vision system", e);
@@ -38,6 +41,7 @@ public class VisionSystem {
     public void shutdown() {
         try {
             captureComponent.shutdown();
+            analysisComponent.shutdown();
             visualizationComponent.shutdown();
         } catch (final Exception e) {
             throw new RuntimeException("Error in vision system shutdown.", e);
@@ -53,7 +57,7 @@ public class VisionSystem {
     }
 
     public static VisionSystem getVisionSystem() {
-        return new VisionSystem(640, 480);
+        return new VisionSystem(320, 240);
     }
 
     public static void main(String[] args) throws Exception {
@@ -66,7 +70,7 @@ public class VisionSystem {
         int width = visionSystem.getVisionContext().width;
         int height = visionSystem.getVisionContext().height;
         JFrame frame = new JFrame();
-        frame.setSize(2 * width, height);
+        frame.setSize(3 * width, height);
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

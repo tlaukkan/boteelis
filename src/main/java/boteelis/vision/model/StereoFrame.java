@@ -16,6 +16,7 @@ public class StereoFrame {
     public int height;
     public int[] leftRawRgb;
     public int[] rightRawRgb;
+    public int[] regionsRawRgb;
 
     public StereoFrame(long captureTimeMillis, int width, int height, int[] leftRawRgb, int[] rightRawRgb, boolean turn) {
         this.captureTimeMillis = captureTimeMillis;
@@ -41,7 +42,6 @@ public class StereoFrame {
 
     public float[] gradient;
 
-    public int[] regionRgb;
-    final LinkedList<Region> regions = new LinkedList<Region>();
+    public final LinkedList<Region> regions = new LinkedList<Region>();
 
 }

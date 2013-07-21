@@ -42,7 +42,17 @@ public class StereoCorrelation {
         final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
         analyzeRegions(width, height, rightColors, regionColors, regions, indexRegionMap, 0.015f, 0.015f);
+        correlateRegions(width, height, leftColors, rightColors, regions);
 
+        System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
+        System.out.println("Regions: " + regions.size());
+
+        renderRegions(width, height,indexRegionMap, leftColors, outputColors);
+
+        ImageStorage.writeImage("target/lion.png", outputImage);
+    }
+
+    public static void correlateRegions(int width, int height, int[] leftColors, int[] rightColors, LinkedList<Region> regions) {
         int maxDx = width / 2;
         for (Region region : regions) {
             float minCorrelation = Float.MAX_VALUE;
@@ -70,13 +80,6 @@ public class StereoCorrelation {
             region.stereoCorrelationDeltaX = maxCorrelationDx;
             region.stereoCorrelation = maxCorrelation / region.indexes.size();
         }
-
-        System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
-        System.out.println("Regions: " + regions.size());
-
-        renderRegions(width, height,indexRegionMap, leftColors, outputColors);
-
-        ImageStorage.writeImage("target/lion.png", outputImage);
     }
 
     public static float colorCorrelation(int color0, int color1) {
@@ -94,7 +97,7 @@ public class StereoCorrelation {
         return 1 - (Math.abs(red0 - red1) + Math.abs(green0 - green1) + Math.abs(blue0 - blue1)) / (255f * 3f);
     }
 
-    private static void renderRegions(int width, int height, Map<Integer, Region> indexRegionMap, int[] leftColors, int[] outputColors) {
+    public static void renderRegions(int width, int height, Map<Integer, Region> indexRegionMap, int[] leftColors, int[] outputColors) {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 int i = x + y * width;
@@ -115,13 +118,13 @@ public class StereoCorrelation {
                     int rx = (i - region.stereoCorrelationDeltaX) % width;
                     if (rx > 0 && region.stereoCorrelation > 0.96f) {
                         outputColors[i] = leftColors[i - region.stereoCorrelationDeltaX];
-                    } /*else {
+                    } else {
                         int color = (int) 255;
+                        color = (color << 8) + (int) (0);
+                        color = (color << 8) + (int) (0);
                         color = (color << 8) + (int) (255);
-                        color = (color << 8) + (int) (0);
-                        color = (color << 8) + (int) (0);
                         outputColors[i] = color;
-                    }*/
+                    }
                 }
             }
         }
