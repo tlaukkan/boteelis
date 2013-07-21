@@ -1,5 +1,12 @@
 package boteelis.vision;
 
+import boteelis.vision.model.VisionContext;
+import com.github.sarxos.webcam.Webcam;
+import org.apache.log4j.xml.DOMConfigurator;
+
+import javax.swing.*;
+import java.awt.*;
+
 /**
  * Created with IntelliJ IDEA.
  * User: tlaukkan
@@ -9,12 +16,77 @@ package boteelis.vision;
  */
 public class VisionSystem {
 
-    private VisionSystem() {
+    private VisionContext visionContext;
+    private CaptureComponent captureComponent;
 
+    private VisionSystem(int width, int height) {
+        visionContext = new VisionContext(width, height);
+        captureComponent = new CaptureComponent(visionContext);
+    }
+
+    public void startup() {
+        try {
+            captureComponent.startup();
+        } catch (final Exception e) {
+            throw new RuntimeException("Failed to startup vision system", e);
+        }
+    }
+
+    public void shutdown() {
+        try {
+            captureComponent.shutdown();
+        } catch (final Exception e) {
+            throw new RuntimeException("Error in vision system shutdown.", e);
+        }
+    }
+
+    public VisionContext getVisionContext() {
+        return visionContext;
     }
 
     public static VisionSystem getVisionSystem() {
-        return new VisionSystem();
+        return new VisionSystem(640, 480);
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        DOMConfigurator.configure("log4j.xml");
+
+        final VisionSystem visionSystem = VisionSystem.getVisionSystem();
+
+
+        int width = visionSystem.getVisionContext().width;
+        int height = visionSystem.getVisionContext().height;
+        JFrame frame = new JFrame();
+        frame.setSize(2 * width, height);
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("Stereo Capture");
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
+
+        SwingUtilities.updateComponentTreeUI(frame);
+
+        frame.setVisible(true);
+
+        visionSystem.startup();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                visionSystem.shutdown();
+            }
+        });
     }
 
 }

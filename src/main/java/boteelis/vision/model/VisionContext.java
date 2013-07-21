@@ -1,10 +1,6 @@
 package boteelis.vision.model;
 
-import java.util.LinkedList;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,6 +16,6 @@ public class VisionContext {
     }
     public int width;
     public int height;
-    public SynchronousQueue<StereoFrame> capturedFrames = new SynchronousQueue<StereoFrame>();
-    public SynchronousQueue<StereoFrame> analyzedFrames = new SynchronousQueue<StereoFrame>();
+    public BlockingQueue <StereoFrame> capturedFrames = new LinkedBlockingQueue<StereoFrame>();
+    public BlockingQueue <StereoFrame> analyzedFrames = new LinkedBlockingQueue <StereoFrame>();
 }
