@@ -2,7 +2,6 @@ package boteelis.vision;
 
 import boteelis.vision.model.StereoFrame;
 import boteelis.vision.model.VisionContext;
-import com.github.sarxos.webcam.Webcam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +10,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
 import java.util.concurrent.*;
 
 /**
@@ -63,8 +61,8 @@ public class VisualizationComponent {
             try {
                 if (context.capturedFrames.size() > 0) {
                     final StereoFrame stereoFrame = context.capturedFrames.poll();
-                    final BufferedImage leftImage = convertRawRgbToImage(stereoFrame.leftRawRgb);
-                    final BufferedImage rightImage = convertRawRgbToImage(stereoFrame.rightRawRgb);
+                    final BufferedImage leftImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.leftRawRgb);
+                    final BufferedImage rightImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.rightRawRgb);
 
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
@@ -90,11 +88,11 @@ public class VisualizationComponent {
         }
     }
 
-    private BufferedImage convertRawRgbToImage(int[] inputColors) {
-        BufferedImage leftImage = new BufferedImage(context.width,context.height,
+    private BufferedImage convertRawRgbToImage(int width, int height,int[] inputColors) {
+        BufferedImage leftImage = new BufferedImage(width, height,
                 BufferedImage.TYPE_INT_ARGB);
         int[] leftColors = ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData();
-        for (int i = 0; i < context.width * context.height; i++) {
+        for (int i = 0; i < width * height; i++) {
             leftColors[i] = inputColors[i];
         }
         return leftImage;

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.util.Date;
 import java.util.concurrent.*;
 
 /**
@@ -42,7 +41,7 @@ public class CaptureComponent {
             public Webcam call() throws Exception {
                 logger.info("Preparing left camera...");
                 final Webcam webcam = Webcam.getWebcams().get(0);
-                webcam.setViewSize(new Dimension(context.width, context.height));
+                webcam.setViewSize(new Dimension(context.captureWidth, context.captureHeight));
                 webcam.open();
                 logger.info("Prepared left camera...");
                 return webcam;
@@ -53,7 +52,7 @@ public class CaptureComponent {
             public Webcam call() throws Exception {
                 logger.info("Preparing right camera...");
                 final Webcam webcam = Webcam.getWebcams().get(1);
-                webcam.setViewSize(new Dimension(context.width, context.height));
+                webcam.setViewSize(new Dimension(context.captureWidth, context.captureHeight));
                 webcam.open();
                 logger.info("Prepared right camera...");
                 return webcam;
@@ -102,12 +101,10 @@ public class CaptureComponent {
                     final long captureEndMillis = System.currentTimeMillis();
                     final long captureTimeMillis = (captureBeginMillis + captureEndMillis) / 2;
 
-                    //logger.info("Captured stereo image at : " + new Date(captureTimeMillis));
-
                     final StereoFrame stereoFrame = new StereoFrame(captureTimeMillis,
-                            context.width, context.height,
+                            context.captureWidth, context.captureHeight,
                             ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData(),
-                            ((DataBufferInt) rightImage.getRaster().getDataBuffer()).getData());
+                            ((DataBufferInt) rightImage.getRaster().getDataBuffer()).getData(), context.turn);
 
                     context.capturedFrames.put(stereoFrame);
                     synchronized (context.capturedFrames) {

@@ -17,12 +17,26 @@ public class StereoFrame {
     public int[] leftRawRgb;
     public int[] rightRawRgb;
 
-    public StereoFrame(long captureTimeMillis, int width, int height, int[] leftRawRgb, int[] rightRawRgb) {
+    public StereoFrame(long captureTimeMillis, int width, int height, int[] leftRawRgb, int[] rightRawRgb, boolean turn) {
         this.captureTimeMillis = captureTimeMillis;
-        this.width = width;
-        this.height = height;
-        this.leftRawRgb = leftRawRgb;
-        this.rightRawRgb = rightRawRgb;
+
+        if (turn) {
+            this.leftRawRgb = new int[width*height];
+            this.rightRawRgb = new int[width*height];
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    this.leftRawRgb[height  - 1 - y + x * height] = leftRawRgb[x + y * width];
+                    this.rightRawRgb[height - 1 - y + x * height] = rightRawRgb[x + y * width];
+                }
+            }
+            this.height = width;
+            this.width = height;
+        } else {
+            this.width = width;
+            this.height = height;
+            this.leftRawRgb = leftRawRgb;
+            this.rightRawRgb = rightRawRgb;
+        }
     }
 
     public float[] gradient;

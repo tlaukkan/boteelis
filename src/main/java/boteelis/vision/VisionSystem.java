@@ -1,7 +1,6 @@
 package boteelis.vision;
 
 import boteelis.vision.model.VisionContext;
-import com.github.sarxos.webcam.Webcam;
 import org.apache.log4j.xml.DOMConfigurator;
 
 import javax.swing.*;
@@ -22,7 +21,7 @@ public class VisionSystem {
     private VisualizationComponent visualizationComponent;
 
     private VisionSystem(int width, int height) {
-        visionContext = new VisionContext(width, height);
+        visionContext = new VisionContext(width, height, true);
         captureComponent = new CaptureComponent(visionContext);
         visualizationComponent = new VisualizationComponent(visionContext);
     }
