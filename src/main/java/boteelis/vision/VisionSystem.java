@@ -17,16 +17,20 @@ import java.awt.*;
 public class VisionSystem {
 
     private VisionContext visionContext;
+
     private CaptureComponent captureComponent;
+    private VisualizationComponent visualizationComponent;
 
     private VisionSystem(int width, int height) {
         visionContext = new VisionContext(width, height);
         captureComponent = new CaptureComponent(visionContext);
+        visualizationComponent = new VisualizationComponent(visionContext);
     }
 
     public void startup() {
         try {
             captureComponent.startup();
+            visualizationComponent.startup();
         } catch (final Exception e) {
             throw new RuntimeException("Failed to startup vision system", e);
         }
@@ -35,6 +39,7 @@ public class VisionSystem {
     public void shutdown() {
         try {
             captureComponent.shutdown();
+            visualizationComponent.shutdown();
         } catch (final Exception e) {
             throw new RuntimeException("Error in vision system shutdown.", e);
         }
@@ -42,6 +47,10 @@ public class VisionSystem {
 
     public VisionContext getVisionContext() {
         return visionContext;
+    }
+
+    public VisualizationComponent getVisualizationComponent() {
+        return visualizationComponent;
     }
 
     public static VisionSystem getVisionSystem() {
@@ -78,6 +87,7 @@ public class VisionSystem {
 
         SwingUtilities.updateComponentTreeUI(frame);
 
+        frame.getContentPane().add(visionSystem.getVisualizationComponent().getPanel());
         frame.setVisible(true);
 
         visionSystem.startup();

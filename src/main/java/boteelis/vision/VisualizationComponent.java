@@ -1,0 +1,114 @@
+package boteelis.vision;
+
+import boteelis.vision.model.StereoFrame;
+import boteelis.vision.model.VisionContext;
+import com.github.sarxos.webcam.Webcam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
+import java.util.concurrent.*;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: tlaukkan
+ * Date: 20.7.2013
+ * Time: 17:35
+ * To change this template use File | Settings | File Templates.
+ */
+public class VisualizationComponent {
+    final Logger logger = LoggerFactory.getLogger(VisualizationComponent.class);
+
+    private JPanel panel;
+    private VisionContext context;
+
+    private boolean exited = false;
+
+    private ExecutorService executor = Executors.newFixedThreadPool(1);
+
+    private Future mainFuture;
+
+    public VisualizationComponent(VisionContext context) {
+        this.context = context;
+        this.panel = new JPanel();
+        this.panel.setSize(context.width, context.height);
+    }
+
+    public JPanel getPanel() {
+        return panel;
+    }
+
+    public void startup() throws InterruptedException, ExecutionException, InvocationTargetException {
+        mainFuture = executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                process();
+            }
+        });
+    }
+
+    public void shutdown() {
+        exited = true;
+        mainFuture.cancel(true);
+        executor.shutdown();
+    }
+
+    public void process() {
+        while (!exited) {
+            try {
+                if (context.capturedFrames.size() > 0) {
+                    final StereoFrame stereoFrame = context.capturedFrames.poll();
+                    final BufferedImage leftImage = convertRawRgbToImage(stereoFrame.leftRawRgb);
+                    final BufferedImage rightImage = convertRawRgbToImage(stereoFrame.rightRawRgb);
+
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            panel.getGraphics().drawImage(leftImage, 0, 0, null);
+                            panel.getGraphics().drawImage(rightImage, context.width, 0, null);
+                        }
+                    });
+
+                    synchronized (context.capturedFrames) {
+                        context.capturedFrames.notifyAll();
+                    }
+                } else {
+                    synchronized (context.capturedFrames) {
+                        context.capturedFrames.wait();
+                    }
+                }
+            } catch (InterruptedException e) {
+                logger.debug("Interrupted.");
+            } catch (Exception e) {
+                logger.error("Error capturing image.", e);
+            }
+        }
+    }
+
+    private BufferedImage convertRawRgbToImage(int[] inputColors) {
+        BufferedImage leftImage = new BufferedImage(context.width,context.height,
+                BufferedImage.TYPE_INT_ARGB);
+        int[] leftColors = ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData();
+        for (int i = 0; i < context.width * context.height; i++) {
+            leftColors[i] = inputColors[i];
+        }
+        return leftImage;
+    }
+
+    public BufferedImage convertImage(BufferedImage inputImage) {
+        int type = inputImage.getType();
+        if(type!=BufferedImage.TYPE_INT_ARGB) {
+            BufferedImage tempImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
+            Graphics g = tempImage.createGraphics();
+            g.drawImage(inputImage,0,0,null);
+            g.dispose();
+            inputImage = tempImage;
+        }
+        return inputImage;
+    }
+}

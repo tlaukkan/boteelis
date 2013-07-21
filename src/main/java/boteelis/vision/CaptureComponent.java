@@ -26,8 +26,6 @@ public class CaptureComponent {
 
     private boolean exited = false;
 
-    private SynchronousQueue<Runnable> tasks = new SynchronousQueue<Runnable>();
-
     private ExecutorService executor = Executors.newFixedThreadPool(3);
 
     private Webcam leftCam;
@@ -104,7 +102,7 @@ public class CaptureComponent {
                     final long captureEndMillis = System.currentTimeMillis();
                     final long captureTimeMillis = (captureBeginMillis + captureEndMillis) / 2;
 
-                    logger.info("Captured stereo image at : " + new Date(captureTimeMillis));
+                    //logger.info("Captured stereo image at : " + new Date(captureTimeMillis));
 
                     final StereoFrame stereoFrame = new StereoFrame(captureTimeMillis,
                             context.width, context.height,
