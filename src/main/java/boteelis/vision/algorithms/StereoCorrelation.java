@@ -176,7 +176,7 @@ public class StereoCorrelation {
                     region.indexes.add(currentIndex);
                     indexRegionMap.put(currentIndex, region);
 
-                    if (n < 30) { // limit region size to ~30 core pixels + region pixels
+                    if (n < 100) { // limit region size to ~30 core pixels + region pixels
                         n++;
                         if (x > 0 && x < width - 1 && y > 0 && y < height - 1) {
                             pushIndex(width, height, currentIndex, x + 1, y, region, indexRegionMap, indexes, analyzed);

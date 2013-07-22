@@ -79,7 +79,46 @@ public class CaptureComponent {
     public void process() {
         while (!exited) {
             try {
-                if (context.capturedFrames.size() < 1) {
+                final long captureBeginMillis = System.currentTimeMillis();
+
+                Future<BufferedImage> leftCamFuture = executor.submit(new Callable<BufferedImage>() {
+                    @Override
+                    public BufferedImage call() throws Exception {
+                        return leftCam.getImage();
+                    }
+                });
+                Future<BufferedImage> rightCamFuture = executor.submit(new Callable<BufferedImage>() {
+                    @Override
+                    public BufferedImage call() throws Exception {
+                        return rightCam.getImage();
+                    }
+                });
+
+                final BufferedImage leftImage = convertImage(leftCamFuture.get());
+                final BufferedImage rightImage = convertImage(rightCamFuture.get());
+
+                final long captureEndMillis = System.currentTimeMillis();
+                final long captureTimeMillis = (captureBeginMillis + captureEndMillis) / 2;
+
+                if (context.currentCaptureFrame == null) {
+                    context.currentCaptureFrame = new StereoFrame(captureTimeMillis,
+                            context.captureWidth, context.captureHeight,
+                            ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData(),
+                            ((DataBufferInt) rightImage.getRaster().getDataBuffer()).getData(), context.turn);
+                } else {
+                    context.currentCaptureFrame.addCapture(((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData(),
+                            ((DataBufferInt) rightImage.getRaster().getDataBuffer()).getData());
+                }
+                if (context.capturedFrames.size() == 0 && context.currentCaptureFrame.captureCount > 5) {
+                    context.capturedFrames.put(context.currentCaptureFrame);
+                    context.currentCaptureFrame = null;
+                    synchronized (context.capturedFrames) {
+                        context.capturedFrames.notifyAll();
+                    }
+                }
+
+
+                /*if (context.capturedFrames.size() < 1) {
                     final long captureBeginMillis = System.currentTimeMillis();
 
                     Future<BufferedImage> leftCamFuture = executor.submit(new Callable<BufferedImage>() {
@@ -114,7 +153,8 @@ public class CaptureComponent {
                     synchronized (context.capturedFrames) {
                         context.capturedFrames.wait();
                     }
-                }
+                }*/
+
             } catch (InterruptedException e) {
                 logger.debug("Interrupted.");
             } catch (Exception e) {
@@ -134,4 +174,5 @@ public class CaptureComponent {
         }
         return inputImage;
     }
+
 }

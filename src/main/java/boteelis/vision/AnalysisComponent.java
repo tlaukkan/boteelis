@@ -76,23 +76,29 @@ public class AnalysisComponent {
                     int[] rightColors = stereoFrame.leftRawRgb;
                     int[] regionColors = new int[width*height];
                     int[] outputColors = new int[width*height];
+                    int[] smoothedRightColors = new int[width*height];
+                    int[] smoothedLeftColors = new int[width*height];
                     float[] gradient = new float[width*height];
 
-                    Watersheding.gradient(width, height, rightColors, gradient);
-                    Watersheding.watershed(width, height, rightColors, gradient, regionColors);
+                    Watersheding.smooth(width, height, rightColors, smoothedRightColors);
+                    Watersheding.smooth(width, height, leftColors, smoothedLeftColors);
+                    Watersheding.gradient(width, height, smoothedRightColors, gradient);
+                    Watersheding.watershed(width, height, smoothedRightColors, gradient, regionColors);
 
                     final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
-                    StereoCorrelation.analyzeRegions(width, height, rightColors, regionColors, stereoFrame.regions, indexRegionMap, 0.015f, 0.015f);
-                    StereoCorrelation.correlateRegions(width, height, leftColors, rightColors, stereoFrame.regions);
+                    StereoCorrelation.analyzeRegions(width, height, smoothedRightColors, regionColors, stereoFrame.regions, indexRegionMap, 0.015f, 0.015f);
+                    StereoCorrelation.correlateRegions(width, height, smoothedLeftColors, smoothedRightColors, stereoFrame.regions);
 
                     StereoCorrelation.renderRegions(width, height, indexRegionMap, leftColors, outputColors);
 
+                    stereoFrame.leftRawRgb = smoothedLeftColors;
+                    stereoFrame.rightRawRgb = smoothedRightColors;
                     stereoFrame.regionsRawRgb = regionColors;
                     stereoFrame.correlationsRawRgb = outputColors;
 
                     logger.info("Analysis took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
-                    logger.info("Found regions: " + stereoFrame.regions.size());
+                    logger.info("Found regions: " + stereoFrame.regions.size() + " Capture averaged over: " + stereoFrame.captureCount);
 
                     context.analyzedFrames.put(stereoFrame);
                     synchronized (context.analyzedFrames) {

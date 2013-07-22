@@ -28,6 +28,8 @@ public class VisionContext {
     public int width;
     public int height;
 
+
+    public StereoFrame currentCaptureFrame;
     public BlockingQueue <StereoFrame> capturedFrames = new LinkedBlockingQueue<StereoFrame>();
     public BlockingQueue <StereoFrame> analyzedFrames = new LinkedBlockingQueue <StereoFrame>();
 }
