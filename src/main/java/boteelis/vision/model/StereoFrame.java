@@ -17,6 +17,7 @@ public class StereoFrame {
     public int[] leftRawRgb;
     public int[] rightRawRgb;
     public int[] regionsRawRgb;
+    public int[] correlationsRawRgb;
 
     public StereoFrame(long captureTimeMillis, int width, int height, int[] leftRawRgb, int[] rightRawRgb, boolean turn) {
         this.captureTimeMillis = captureTimeMillis;

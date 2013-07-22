@@ -70,7 +70,7 @@ public class VisionSystem {
         int width = visionSystem.getVisionContext().width;
         int height = visionSystem.getVisionContext().height;
         JFrame frame = new JFrame();
-        frame.setSize(3 * width, height);
+        frame.setSize(4 * width, height);
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

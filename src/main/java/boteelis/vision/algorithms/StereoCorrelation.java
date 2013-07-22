@@ -116,7 +116,7 @@ public class StereoCorrelation {
                     outputColors[i] = color;
                     */
                     int rx = (i - region.stereoCorrelationDeltaX) % width;
-                    if (rx > 0 && region.stereoCorrelation > 0.96f) {
+                    if (rx >= 0 && region.stereoCorrelation > 0.95f) {
                         outputColors[i] = leftColors[i - region.stereoCorrelationDeltaX];
                     } else {
                         int color = (int) 255;
@@ -155,6 +155,7 @@ public class StereoCorrelation {
         indexes.push(new IndexPair(i0,i0));
         analyzed[i0] = true;
 
+        int n = 1;
         while (indexes.size() > 0) {
             IndexPair indexPair = indexes.pop();
             int lastIndex = indexPair.source;
@@ -162,8 +163,8 @@ public class StereoCorrelation {
             int x = currentIndex % width;
             int y = (currentIndex -  x) / width;
             if (!indexRegionMap.containsKey(currentIndex) && x > -1 && x < width && y > -1 && y < height) {
-                //if (regionColor == regionColors[currentIndex]) {
-                if (Watersheding.isSameRegion(regionColor, regionColors[currentIndex], hueTolerance, brightnessTolerance)) {
+                if (regionColor == regionColors[currentIndex]) {
+                //if (Watersheding.isSameRegion(regionColor, regionColors[currentIndex], hueTolerance, brightnessTolerance)) {
 
                     int size = region.indexes.size();
                     region.x = (region.x * size + x) / (size + 1);
@@ -175,11 +176,14 @@ public class StereoCorrelation {
                     region.indexes.add(currentIndex);
                     indexRegionMap.put(currentIndex, region);
 
-                    if (x > 0 && x < width - 1 && y > 0 && y < height - 1) {
-                        pushIndex(width, height, currentIndex, x + 1, y, region, indexRegionMap, indexes, analyzed);
-                        pushIndex(width, height, currentIndex, x - 1, y, region, indexRegionMap, indexes, analyzed);
-                        pushIndex(width, height, currentIndex, x, y + 1, region, indexRegionMap, indexes, analyzed);
-                        pushIndex(width, height, currentIndex, x, y - 1, region, indexRegionMap, indexes, analyzed);
+                    if (n < 30) { // limit region size to ~30 core pixels + region pixels
+                        n++;
+                        if (x > 0 && x < width - 1 && y > 0 && y < height - 1) {
+                            pushIndex(width, height, currentIndex, x + 1, y, region, indexRegionMap, indexes, analyzed);
+                            pushIndex(width, height, currentIndex, x - 1, y, region, indexRegionMap, indexes, analyzed);
+                            pushIndex(width, height, currentIndex, x, y + 1, region, indexRegionMap, indexes, analyzed);
+                            pushIndex(width, height, currentIndex, x, y - 1, region, indexRegionMap, indexes, analyzed);
+                        }
                     }
                 } else {
                     analyzed[currentIndex] = false;

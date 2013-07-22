@@ -86,9 +86,10 @@ public class AnalysisComponent {
                     StereoCorrelation.analyzeRegions(width, height, rightColors, regionColors, stereoFrame.regions, indexRegionMap, 0.015f, 0.015f);
                     StereoCorrelation.correlateRegions(width, height, leftColors, rightColors, stereoFrame.regions);
 
-                    StereoCorrelation.renderRegions(width, height,indexRegionMap, leftColors, outputColors);
+                    StereoCorrelation.renderRegions(width, height, indexRegionMap, leftColors, outputColors);
 
-                    stereoFrame.regionsRawRgb = outputColors;
+                    stereoFrame.regionsRawRgb = regionColors;
+                    stereoFrame.correlationsRawRgb = outputColors;
 
                     logger.info("Analysis took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
                     logger.info("Found regions: " + stereoFrame.regions.size());

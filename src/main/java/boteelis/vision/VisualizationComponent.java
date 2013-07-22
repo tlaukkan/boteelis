@@ -34,7 +34,7 @@ public class VisualizationComponent {
     public VisualizationComponent(VisionContext context) {
         this.context = context;
         this.panel = new JPanel();
-        this.panel.setSize(3 * context.width, context.height);
+        this.panel.setSize(4 * context.width, context.height);
     }
 
     public JPanel getPanel() {
@@ -64,6 +64,7 @@ public class VisualizationComponent {
                     final BufferedImage leftImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.leftRawRgb);
                     final BufferedImage rightImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.rightRawRgb);
                     final BufferedImage regionImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.regionsRawRgb);
+                    final BufferedImage correlationImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.correlationsRawRgb);
 
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
@@ -71,6 +72,7 @@ public class VisualizationComponent {
                             panel.getGraphics().drawImage(leftImage, 0, 0, null);
                             panel.getGraphics().drawImage(rightImage, context.width, 0, null);
                             panel.getGraphics().drawImage(regionImage, 2 * context.width, 0, null);
+                            panel.getGraphics().drawImage(correlationImage, 3 * context.width, 0, null);
                         }
                     });
 
