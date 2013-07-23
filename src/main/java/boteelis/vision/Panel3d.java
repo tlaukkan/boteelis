@@ -20,7 +20,7 @@ final class Panel3d extends JPanel {
     public Panel3d() {
         setLayout(new BorderLayout());
         GraphicsConfiguration gc=SimpleUniverse.getPreferredConfiguration();
-        Canvas3D canvas3D = new Canvas3D(gc);//See the added gc? this is a preferred config
+        Canvas3D canvas3D = new Canvas3D(gc);
         add(BorderLayout.CENTER, canvas3D);
 
         universe = new SimpleUniverse(canvas3D);
@@ -48,7 +48,6 @@ final class Panel3d extends JPanel {
         lineGroup.setCapability(BranchGroup.ALLOW_DETACH) ;
         transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
         lineGroup.addChild(transformGroup);
-        //lineGroup.compile();
         universe.addBranchGraph(lineGroup);
         transformGroup = new TransformGroup();
         repaint();

@@ -95,7 +95,6 @@ public class VisionSystem {
         SwingUtilities.updateComponentTreeUI(frame);
 
         final GridLayout layout = new GridLayout(2, 1);
-        //layout.setAlignment(FlowLayout.LEFT);
         frame.getContentPane().setLayout(layout);
         frame.getContentPane().add(visionSystem.getVisualizationComponent().getPanel());
         frame.getContentPane().add(visionSystem.getVisualizationComponent().getPanel3d());
