@@ -65,12 +65,16 @@ public class VisionSystem {
         DOMConfigurator.configure("log4j.xml");
 
         final VisionSystem visionSystem = VisionSystem.getVisionSystem();
-
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                visionSystem.shutdown();
+            }
+        });
 
         int width = visionSystem.getVisionContext().width;
         int height = visionSystem.getVisionContext().height;
         JFrame frame = new JFrame();
-        frame.setSize(4 * width, height);
+        frame.setSize(4 * width, 2 * height);
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         frame.setLocation(dim.width / 2 - frame.getSize().width / 2, dim.height / 2 - frame.getSize().height / 2);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -90,16 +94,15 @@ public class VisionSystem {
 
         SwingUtilities.updateComponentTreeUI(frame);
 
+        final GridLayout layout = new GridLayout(2, 1);
+        //layout.setAlignment(FlowLayout.LEFT);
+        frame.getContentPane().setLayout(layout);
         frame.getContentPane().add(visionSystem.getVisualizationComponent().getPanel());
+        frame.getContentPane().add(visionSystem.getVisualizationComponent().getPanel3d());
         frame.setVisible(true);
 
         visionSystem.startup();
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                visionSystem.shutdown();
-            }
-        });
     }
 
 }

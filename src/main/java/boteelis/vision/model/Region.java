@@ -21,6 +21,10 @@ public class Region {
     public int stereoCorrelationDeltaX;
     public float stereoCorrelation;
 
+    public float rx;
+    public float ry;
+    public float rz;
+
     public Set<Integer> indexes = new HashSet<Integer>();
     public Set<Integer> boundaryIndexes = new HashSet<Integer>();
     public Set<Region> neighbours = new HashSet<Region>();

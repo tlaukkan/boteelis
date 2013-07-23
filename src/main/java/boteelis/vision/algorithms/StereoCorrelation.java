@@ -79,6 +79,25 @@ public class StereoCorrelation {
 
             region.stereoCorrelationDeltaX = maxCorrelationDx;
             region.stereoCorrelation = maxCorrelation / region.indexes.size();
+
+            // base distance between cams ~ 3.75 cm
+            float distanceBetweenCamsInMeters = 0.0375f;
+            // focal length of cams ~ 4mm
+            float focalLengthInMeters = 0.004f;
+            // field of view in radians
+            float fov = (float) (2 * Math.PI * 60f / 360f);
+            float sensorWidthInPixels = Math.max(width, height);
+            // meters per pixel
+            float pixelWidthInMeters = (float) (2* (Math.sin(fov) * focalLengthInMeters / Math.cos(fov)) / sensorWidthInPixels);
+            if (maxCorrelationDx == 0) {
+                region.rx = 0;
+                region.ry = 0;
+                region.rz = Float.MAX_VALUE;
+            } else {
+                region.rz = distanceBetweenCamsInMeters * focalLengthInMeters / pixelWidthInMeters * Math.abs(maxCorrelationDx);
+                region.rx = (pixelWidthInMeters * region.x) * region.rz / focalLengthInMeters;
+                region.ry = (pixelWidthInMeters * region.y) * region.rz / focalLengthInMeters;
+            }
         }
     }
 

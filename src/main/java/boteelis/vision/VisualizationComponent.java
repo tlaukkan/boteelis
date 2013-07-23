@@ -1,11 +1,14 @@
 package boteelis.vision;
 
+import boteelis.vision.model.Region;
 import boteelis.vision.model.StereoFrame;
 import boteelis.vision.model.VisionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.vecmath.Color3f;
+import javax.vecmath.Point3f;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -23,6 +26,7 @@ public class VisualizationComponent {
     final Logger logger = LoggerFactory.getLogger(VisualizationComponent.class);
 
     private JPanel panel;
+    private Panel3d panel3d;
     private VisionContext context;
 
     private boolean exited = false;
@@ -34,11 +38,15 @@ public class VisualizationComponent {
     public VisualizationComponent(VisionContext context) {
         this.context = context;
         this.panel = new JPanel();
-        this.panel.setSize(4 * context.width, context.height);
+        this.panel3d = new Panel3d();
     }
 
     public JPanel getPanel() {
         return panel;
+    }
+
+    public Panel3d getPanel3d() {
+        return panel3d;
     }
 
     public void startup() throws InterruptedException, ExecutionException, InvocationTargetException {
@@ -73,6 +81,13 @@ public class VisualizationComponent {
                             panel.getGraphics().drawImage(rightImage, context.width, 0, null);
                             panel.getGraphics().drawImage(regionImage, 2 * context.width, 0, null);
                             panel.getGraphics().drawImage(correlationImage, 3 * context.width, 0, null);
+
+                            for (final Region region : stereoFrame.regions) {
+                                panel3d.addPoint(new Point3f(region.rx, region.ry, region.rz),
+                                        new Color3f(region.red, region.green, region.blue));
+                                System.out.println(new Point3f(region.rx, region.ry, region.rz));
+                            }
+                            panel3d.drawPoints();
                         }
                     });
 
