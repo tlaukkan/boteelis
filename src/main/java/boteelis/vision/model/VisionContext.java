@@ -28,7 +28,9 @@ public class VisionContext {
     public int width;
     public int height;
 
-    public float leftBrightnessCorrection = 0;
+    public float leftRedShift = 0;
+    public float leftGreenShift = 0;
+    public float leftBlueShift = 0;
     public long lastCalibrationMillis = System.currentTimeMillis() - 50000;
 
     public StereoFrame currentCaptureFrame;

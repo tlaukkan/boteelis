@@ -42,7 +42,7 @@ public class StereoCorrelation {
         final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
         analyzeRegions(width, height, rightColors, regionColors, regions, indexRegionMap, 0.015f, 0.015f);
-        correlateRegions(width, height, leftColors, rightColors, regions, 0);
+        correlateRegions(width, height, leftColors, rightColors, regions, 0, 0, 0);
 
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
         System.out.println("Regions: " + regions.size());
@@ -52,7 +52,7 @@ public class StereoCorrelation {
         ImageStorage.writeImage("target/lion.png", outputImage);
     }
 
-    public static float correlateRegions(int width, int height, int[] leftColors, int[] rightColors, LinkedList<Region> regions, float leftBrightnessCorrection) {
+    public static float correlateRegions(int width, int height, int[] leftColors, int[] rightColors, LinkedList<Region> regions, float leftRedShift, float leftGreenShift, float leftBlueShift) {
         int maxDx = width / 2;
         float correlationSum = 0;
         for (Region region : regions) {
@@ -66,7 +66,7 @@ public class StereoCorrelation {
                     int rx = i % width;
                     int lx = rx - dx;
                     if (lx >= 0) {
-                        correlation += colorCorrelation(leftColors[i - dx], rightColors[i], leftBrightnessCorrection);
+                        correlation += colorCorrelation(leftColors[i - dx], rightColors[i], leftRedShift, leftGreenShift, leftBlueShift);
                     }
                 }
                 if (correlation > maxCorrelation) {
@@ -105,7 +105,7 @@ public class StereoCorrelation {
         return correlationSum / regions.size();
     }
 
-    public static float colorCorrelation(int color0, int color1, float leftBrightnessCorrection) {
+    public static float colorCorrelation(int color0, int color1, float leftRedShift, float leftGreenShift, float leftBlueShift) {
         if (color0 == color1) {
             return 1;
         }
@@ -117,7 +117,7 @@ public class StereoCorrelation {
         float green1 = (color1 >> 8) & 0xff;
         float blue1 = (color1 >> 0) & 0xff;
 
-        return 1 - (Math.abs(red0 + leftBrightnessCorrection - red1) + Math.abs(green0 + leftBrightnessCorrection - green1) + Math.abs(blue0 + leftBrightnessCorrection - blue1)) / (255f * 3f);
+        return 1 - (Math.abs(red0 + leftRedShift - red1) + Math.abs(green0 + leftGreenShift - green1) + Math.abs(blue0 + leftBlueShift - blue1)) / (255f * 3f);
     }
 
     public static float compareCorrelatedRegionsBrightness(int width, int height, Map<Integer, Region> indexRegionMap, int[] leftColors, int[] rightColors) {

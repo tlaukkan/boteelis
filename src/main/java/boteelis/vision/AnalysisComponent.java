@@ -87,8 +87,11 @@ public class AnalysisComponent {
 
                     final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
-                    StereoCorrelation.analyzeRegions(width, height, smoothedRightColors, regionColors, stereoFrame.regions, indexRegionMap, 0.015f, 0.015f);
-                    float correlation = StereoCorrelation.correlateRegions(width, height, smoothedLeftColors, smoothedRightColors, stereoFrame.regions, context.leftBrightnessCorrection);
+                    StereoCorrelation.analyzeRegions(width, height, smoothedRightColors, regionColors,
+                            stereoFrame.regions, indexRegionMap, 0.015f, 0.015f);
+                    float correlation = StereoCorrelation.correlateRegions(width, height, smoothedLeftColors,
+                            smoothedRightColors, stereoFrame.regions,
+                            context.leftRedShift, context.leftGreenShift, context.leftBlueShift);
 
                     //float correlatedBrightnessDifference =  StereoCorrelation.compareCorrelatedRegionsBrightness(width, height, indexRegionMap, leftColors, rightColors);
 
@@ -107,20 +110,52 @@ public class AnalysisComponent {
                         logger.info("Calibrating brightness due to low correction...");
                         context.lastCalibrationMillis = System.currentTimeMillis();
 
-                        float maxCorrelation = - Float.MAX_VALUE;
-                        float bestBrightnessCorrection = 0;
-                        for (int i = -20; i <20; i++) {
-                            float brightnessCorrectionCandidate = context.leftBrightnessCorrection + i;
-                            float newCorrelation = StereoCorrelation.correlateRegions(width, height,
-                                    smoothedLeftColors, smoothedRightColors, stereoFrame.regions,
-                                    brightnessCorrectionCandidate);
-                            if (newCorrelation > maxCorrelation) {
-                                maxCorrelation = newCorrelation;
-                                bestBrightnessCorrection = brightnessCorrectionCandidate;
+                        float lastCorrelation = correlation;
+                        int i = 0;
+                        while (true) {
+                            float maxCorrelation = - Float.MAX_VALUE;
+                            float bestRedShift = 0;
+                            float bestGreenShift = 0;
+                            float bestBlueShift = 0;
+                            for (int r = -1; r <= 1; r+=2) {
+                                for (int g = -1; g <= 1; g+=2) {
+                                    for (int b = -1; b <= 1; b+=2) {
+                                        float redShiftCandidate = context.leftRedShift + r;
+                                        float greenShiftCandidate = context.leftGreenShift + g;
+                                        float blueShiftCandidate = context.leftBlueShift + b;
+                                        float newCorrelation = StereoCorrelation.correlateRegions(width, height,
+                                                smoothedLeftColors, smoothedRightColors, stereoFrame.regions,
+                                                redShiftCandidate, greenShiftCandidate, blueShiftCandidate);
+                                        if (newCorrelation > maxCorrelation) {
+                                            maxCorrelation = newCorrelation;
+                                            bestRedShift = redShiftCandidate;
+                                            bestGreenShift = greenShiftCandidate;
+                                            bestBlueShift = blueShiftCandidate;
+                                        }
+                                    }
+                                }
                             }
+                            context.leftRedShift = bestRedShift;
+                            context.leftGreenShift = bestGreenShift;
+                            context.leftBlueShift = bestBlueShift;
+
+                            if (lastCorrelation >= maxCorrelation) {
+                                break;
+                            }
+                            lastCorrelation = maxCorrelation;
+                            i++;
+                            logger.info("Calibration iteration " + i + " candidate correlation " + maxCorrelation
+                                    + " with left camera color shift:"
+                                    + " r=" + context.leftRedShift
+                                    + " g=" + context.leftGreenShift
+                                    + " b=" + context.leftBlueShift);
                         }
-                        context.leftBrightnessCorrection = bestBrightnessCorrection;
-                        logger.info("Calibrated brightness correction to be: " + bestBrightnessCorrection + " with correlation of " + maxCorrelation);
+
+                        logger.info("Calibration iteration " + i + " found best correlation " + lastCorrelation
+                                + " with left camera color shift:"
+                                + " r=" + context.leftRedShift
+                                + " g=" + context.leftGreenShift
+                                + " b=" + context.leftBlueShift);
 
                     }
 
