@@ -42,7 +42,7 @@ public class StereoCorrelation {
         final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
         analyzeRegions(width, height, rightColors, regionColors, regions, indexRegionMap, 0.015f, 0.015f);
-        correlateRegions(width, height, leftColors, rightColors, regions, 0, 0, 0);
+        correlateRegions(width, height, leftColors, rightColors, regions, 0, 0, 0, 0);
 
         System.out.println("Manipulation took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
         System.out.println("Regions: " + regions.size());
@@ -52,34 +52,47 @@ public class StereoCorrelation {
         ImageStorage.writeImage("target/lion.png", outputImage);
     }
 
-    public static float correlateRegions(int width, int height, int[] leftColors, int[] rightColors, LinkedList<Region> regions, float leftRedShift, float leftGreenShift, float leftBlueShift) {
+    public static float correlateRegions(int width, int height, int[] leftColors, int[] rightColors, LinkedList<Region> regions, float leftRedShift, float leftGreenShift, float leftBlueShift, int yShift) {
         int maxDx = width / 2;
+        int correlatedRegions = 0;
         float correlationSum = 0;
         for (Region region : regions) {
-            float minCorrelation = Float.MAX_VALUE;
-            float maxCorrelation = - Float.MAX_VALUE;
-            int maxCorrelationDx = -1;
+            float minCorrelation = 1;
+            float maxCorrelation = 0;
+            int maxCorrelationDx = 0;
 
             for (int dx = 0; dx < maxDx; dx++) {
                 float correlation = 0;
+                int includedPixels = 0;
                 for (int i : region.indexes) {
                     int rx = i % width;
                     int lx = rx - dx;
-                    if (lx >= 0) {
-                        correlation += colorCorrelation(leftColors[i - dx], rightColors[i], leftRedShift, leftGreenShift, leftBlueShift);
+                    if (lx >= 0 && i - dx + yShift * width > 0 && i - dx + yShift * width < width * height) {
+                        correlation += colorCorrelation(leftColors[i - dx + yShift * width], rightColors[i], leftRedShift, leftGreenShift, leftBlueShift);
+                        includedPixels++;
+                    } else {
+                        correlation = 0;
+                        includedPixels = 0;
+                        break;
                     }
                 }
-                if (correlation > maxCorrelation) {
-                    maxCorrelation = correlation;
-                    maxCorrelationDx = dx;
-                }
-                if (correlation < minCorrelation) {
-                    minCorrelation = correlation;
+                if (includedPixels > 0) {
+                    correlation = correlation / includedPixels;
+                    if (correlation > maxCorrelation) {
+                        maxCorrelation = correlation;
+                        maxCorrelationDx = dx;
+                    }
+                    if (correlation < minCorrelation) {
+                        minCorrelation = correlation;
+                    }
                 }
             }
 
+            if (maxCorrelation != 0) {
+                correlatedRegions++;
+            }
             region.stereoCorrelationDeltaX = maxCorrelationDx;
-            region.stereoCorrelation = maxCorrelation / region.indexes.size();
+            region.stereoCorrelation = maxCorrelation;
             correlationSum += region.stereoCorrelation;
 
             // base distance between cams ~ 3.75 cm
@@ -102,7 +115,7 @@ public class StereoCorrelation {
             }
         }
 
-        return correlationSum / regions.size();
+        return correlationSum / correlatedRegions;
     }
 
     public static float colorCorrelation(int color0, int color1, float leftRedShift, float leftGreenShift, float leftBlueShift) {

@@ -91,7 +91,7 @@ public class AnalysisComponent {
                             stereoFrame.regions, indexRegionMap, 0.015f, 0.015f);
                     float correlation = StereoCorrelation.correlateRegions(width, height, smoothedLeftColors,
                             smoothedRightColors, stereoFrame.regions,
-                            context.leftRedShift, context.leftGreenShift, context.leftBlueShift);
+                            context.leftRedShift, context.leftGreenShift, context.leftBlueShift, context.leftYShift);
 
                     //float correlatedBrightnessDifference =  StereoCorrelation.compareCorrelatedRegionsBrightness(width, height, indexRegionMap, leftColors, rightColors);
 
@@ -114,18 +114,21 @@ public class AnalysisComponent {
                         int i = 0;
                         while (true) {
                             float maxCorrelation = - Float.MAX_VALUE;
-                            float bestRedShift = 0;
-                            float bestGreenShift = 0;
-                            float bestBlueShift = 0;
-                            for (int r = -1; r <= 1; r+=2) {
-                                for (int g = -1; g <= 1; g+=2) {
-                                    for (int b = -1; b <= 1; b+=2) {
+                            float bestRedShift = context.leftRedShift;
+                            float bestGreenShift = context.leftGreenShift;
+                            float bestBlueShift = context.leftBlueShift;
+                            for (int r = -1; r <= 1; r+=1) {
+                                for (int g = -1; g <= 1; g+=1) {
+                                    for (int b = -1; b <= 1; b+=1) {
+                                        if (r == 0 && g == 0 && b == 0)  {
+                                            continue;
+                                        }
                                         float redShiftCandidate = context.leftRedShift + r;
                                         float greenShiftCandidate = context.leftGreenShift + g;
                                         float blueShiftCandidate = context.leftBlueShift + b;
                                         float newCorrelation = StereoCorrelation.correlateRegions(width, height,
                                                 smoothedLeftColors, smoothedRightColors, stereoFrame.regions,
-                                                redShiftCandidate, greenShiftCandidate, blueShiftCandidate);
+                                                redShiftCandidate, greenShiftCandidate, blueShiftCandidate, context.leftYShift);
                                         if (newCorrelation > maxCorrelation) {
                                             maxCorrelation = newCorrelation;
                                             bestRedShift = redShiftCandidate;
@@ -148,14 +151,39 @@ public class AnalysisComponent {
                                     + " with left camera color shift:"
                                     + " r=" + context.leftRedShift
                                     + " g=" + context.leftGreenShift
-                                    + " b=" + context.leftBlueShift);
+                                    + " b=" + context.leftBlueShift
+                                    + " y=" + context.leftYShift);
                         }
 
+                        float maxCorrelation = - Float.MAX_VALUE;
+                        int bestYShift = context.leftYShift;
+                        for (int y = -5; y <= 5; y+=1) {
+                            int yShiftCandidate = context.leftYShift + y;
+                            float newCorrelation = StereoCorrelation.correlateRegions(width, height,
+                                    smoothedLeftColors, smoothedRightColors, stereoFrame.regions,
+                                    context.leftRedShift, context.leftGreenShift, context.leftBlueShift,
+                                    yShiftCandidate);
+                            if (newCorrelation > maxCorrelation) {
+                                maxCorrelation = newCorrelation;
+                                bestYShift = yShiftCandidate;
+                            }
+                            i++;
+                            logger.info("Calibration iteration " + i + " candidate correlation " + newCorrelation
+                                    + " with left camera y shift:"
+                                    + " r=" + context.leftRedShift
+                                    + " g=" + context.leftGreenShift
+                                    + " b=" + context.leftBlueShift
+                                    + " y=" + yShiftCandidate);
+                        }
+                        context.leftYShift = bestYShift;
+                        lastCorrelation = maxCorrelation;
+
                         logger.info("Calibration iteration " + i + " found best correlation " + lastCorrelation
-                                + " with left camera color shift:"
+                                + " with shifts:"
                                 + " r=" + context.leftRedShift
                                 + " g=" + context.leftGreenShift
-                                + " b=" + context.leftBlueShift);
+                                + " b=" + context.leftBlueShift
+                                + " y=" + context.leftYShift);
 
                     }
 
