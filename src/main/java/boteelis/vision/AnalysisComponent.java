@@ -88,7 +88,9 @@ public class AnalysisComponent {
                     final Map<Integer, Region> indexRegionMap = new HashMap<Integer, Region>();
 
                     StereoCorrelation.analyzeRegions(width, height, smoothedRightColors, regionColors, stereoFrame.regions, indexRegionMap, 0.015f, 0.015f);
-                    StereoCorrelation.correlateRegions(width, height, smoothedLeftColors, smoothedRightColors, stereoFrame.regions);
+                    float correlation = StereoCorrelation.correlateRegions(width, height, smoothedLeftColors, smoothedRightColors, stereoFrame.regions, context.leftBrightnessCorrection);
+
+                    //float correlatedBrightnessDifference =  StereoCorrelation.compareCorrelatedRegionsBrightness(width, height, indexRegionMap, leftColors, rightColors);
 
                     StereoCorrelation.renderRegions(width, height, indexRegionMap, leftColors, outputColors);
 
@@ -99,6 +101,29 @@ public class AnalysisComponent {
 
                     logger.info("Analysis took: " + (System.currentTimeMillis() -  startTimeMillis) + "ms.");
                     logger.info("Found regions: " + stereoFrame.regions.size() + " Capture averaged over: " + stereoFrame.captureCount);
+                    logger.info("Correlation: " + (((int) (correlation * 10000)) / 100f) + "%");
+
+                    if (correlation < 0.90 ||(correlation < 0.98 && System.currentTimeMillis() - context.lastCalibrationMillis > 60000)) {
+                        logger.info("Calibrating brightness due to low correction...");
+                        context.lastCalibrationMillis = System.currentTimeMillis();
+
+                        float maxCorrelation = - Float.MAX_VALUE;
+                        float bestBrightnessCorrection = 0;
+                        for (int i = -20; i <20; i++) {
+                            float brightnessCorrectionCandidate = context.leftBrightnessCorrection + i;
+                            float newCorrelation = StereoCorrelation.correlateRegions(width, height,
+                                    smoothedLeftColors, smoothedRightColors, stereoFrame.regions,
+                                    brightnessCorrectionCandidate);
+                            if (newCorrelation > maxCorrelation) {
+                                maxCorrelation = newCorrelation;
+                                bestBrightnessCorrection = brightnessCorrectionCandidate;
+                            }
+                        }
+                        context.leftBrightnessCorrection = bestBrightnessCorrection;
+                        logger.info("Calibrated brightness correction to be: " + bestBrightnessCorrection + " with correlation of " + maxCorrelation);
+
+                    }
+
 
                     context.analyzedFrames.put(stereoFrame);
                     synchronized (context.analyzedFrames) {

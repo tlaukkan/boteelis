@@ -28,6 +28,8 @@ public class VisionContext {
     public int width;
     public int height;
 
+    public float leftBrightnessCorrection = 0;
+    public long lastCalibrationMillis = System.currentTimeMillis() - 50000;
 
     public StereoFrame currentCaptureFrame;
     public BlockingQueue <StereoFrame> capturedFrames = new LinkedBlockingQueue<StereoFrame>();

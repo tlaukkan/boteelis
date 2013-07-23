@@ -334,7 +334,6 @@ public class Watersheding {
         for (int x = 0; x < width; x++) {
 
             for (int y = 0; y < height; y++) {
-
                 final ColorSum colorSum = new ColorSum();
                 sumSample(width, height, inputColors, x, y, colorSum);
                 sumSample(width, height, inputColors, x + 1, y, colorSum);
