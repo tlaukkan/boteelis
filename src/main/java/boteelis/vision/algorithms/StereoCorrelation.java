@@ -88,15 +88,15 @@ public class StereoCorrelation {
             float fov = (float) (2 * Math.PI * 60f / 360f);
             float sensorWidthInPixels = Math.max(width, height);
             // meters per pixel
-            float pixelWidthInMeters = (float) (2* (Math.sin(fov) * focalLengthInMeters / Math.cos(fov)) / sensorWidthInPixels);
+            float pixelWidthInMeters = (float) (2* (Math.sin(fov / 2) * focalLengthInMeters / Math.cos(fov / 2)) / sensorWidthInPixels);
             if (maxCorrelationDx == 0) {
                 region.rx = 0;
                 region.ry = 0;
                 region.rz = Float.MAX_VALUE;
             } else {
-                region.rz = distanceBetweenCamsInMeters * focalLengthInMeters / pixelWidthInMeters * Math.abs(maxCorrelationDx);
-                region.rx = (pixelWidthInMeters * region.x) * region.rz / focalLengthInMeters;
-                region.ry = (pixelWidthInMeters * region.y) * region.rz / focalLengthInMeters;
+                region.rz = distanceBetweenCamsInMeters * focalLengthInMeters / (pixelWidthInMeters * Math.abs(maxCorrelationDx));
+                region.rx = (pixelWidthInMeters * (region.x - width / 2)) * region.rz / focalLengthInMeters;
+                region.ry = (pixelWidthInMeters * (- (region.y - height / 2))) * region.rz / focalLengthInMeters;
             }
         }
     }

@@ -83,9 +83,11 @@ public class VisualizationComponent {
                             panel.getGraphics().drawImage(correlationImage, 3 * context.width, 0, null);
 
                             for (final Region region : stereoFrame.regions) {
-                                panel3d.addPoint(new Point3f(region.rx, region.ry, region.rz),
-                                        new Color3f(region.red, region.green, region.blue));
-                                System.out.println(new Point3f(region.rx, region.ry, region.rz));
+                                if (region.stereoCorrelation > 0.95) {
+                                    panel3d.addPoint(new Point3f(region.rx, region.ry, region.rz),
+                                            new Color3f(region.red, region.green, region.blue));
+                                }
+                                //System.out.println(new Point3f(region.rx, region.ry, region.rz));
                             }
                             panel3d.drawPoints();
                         }
