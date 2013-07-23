@@ -118,25 +118,4 @@ public class AnalysisComponent {
         }
     }
 
-    private BufferedImage convertRawRgbToImage(int width, int height,int[] inputColors) {
-        BufferedImage leftImage = new BufferedImage(width, height,
-                BufferedImage.TYPE_INT_ARGB);
-        int[] leftColors = ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData();
-        for (int i = 0; i < width * height; i++) {
-            leftColors[i] = inputColors[i];
-        }
-        return leftImage;
-    }
-
-    public BufferedImage convertImage(BufferedImage inputImage) {
-        int type = inputImage.getType();
-        if(type!=BufferedImage.TYPE_INT_ARGB) {
-            BufferedImage tempImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
-            Graphics g = tempImage.createGraphics();
-            g.drawImage(inputImage,0,0,null);
-            g.dispose();
-            inputImage = tempImage;
-        }
-        return inputImage;
-    }
 }

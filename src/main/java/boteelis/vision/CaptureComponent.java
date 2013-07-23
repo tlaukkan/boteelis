@@ -1,5 +1,6 @@
 package boteelis.vision;
 
+import boteelis.vision.algorithms.ImageConvert;
 import boteelis.vision.model.StereoFrame;
 import boteelis.vision.model.VisionContext;
 import com.github.sarxos.webcam.Webcam;
@@ -94,8 +95,8 @@ public class CaptureComponent {
                     }
                 });
 
-                final BufferedImage leftImage = convertImage(leftCamFuture.get());
-                final BufferedImage rightImage = convertImage(rightCamFuture.get());
+                final BufferedImage leftImage = ImageConvert.convertImage(leftCamFuture.get());
+                final BufferedImage rightImage = ImageConvert.convertImage(rightCamFuture.get());
 
                 final long captureEndMillis = System.currentTimeMillis();
                 final long captureTimeMillis = (captureBeginMillis + captureEndMillis) / 2;
@@ -163,7 +164,7 @@ public class CaptureComponent {
         }
     }
 
-    public BufferedImage convertImage(BufferedImage inputImage) {
+    /*public BufferedImage convertImage(BufferedImage inputImage) {
         int type = inputImage.getType();
         if(type!=BufferedImage.TYPE_INT_ARGB) {
             BufferedImage tempImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
@@ -173,6 +174,6 @@ public class CaptureComponent {
             inputImage = tempImage;
         }
         return inputImage;
-    }
+    }*/
 
 }

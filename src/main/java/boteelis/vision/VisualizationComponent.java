@@ -1,5 +1,6 @@
 package boteelis.vision;
 
+import boteelis.vision.algorithms.ImageConvert;
 import boteelis.vision.model.Region;
 import boteelis.vision.model.StereoFrame;
 import boteelis.vision.model.VisionContext;
@@ -69,10 +70,10 @@ public class VisualizationComponent {
             try {
                 if (context.analyzedFrames.size() > 0) {
                     final StereoFrame stereoFrame = context.analyzedFrames.poll();
-                    final BufferedImage leftImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.leftRawRgb);
-                    final BufferedImage rightImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.rightRawRgb);
-                    final BufferedImage regionImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.regionsRawRgb);
-                    final BufferedImage correlationImage = convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.correlationsRawRgb);
+                    final BufferedImage leftImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.leftRawRgb);
+                    final BufferedImage rightImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.rightRawRgb);
+                    final BufferedImage regionImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.regionsRawRgb);
+                    final BufferedImage correlationImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.correlationsRawRgb);
 
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
@@ -85,7 +86,7 @@ public class VisualizationComponent {
                             for (final Region region : stereoFrame.regions) {
                                 if (region.stereoCorrelation > 0.95) {
                                     panel3d.addPoint(new Point3f(region.rx, region.ry, region.rz),
-                                            new Color3f(region.red, region.green, region.blue));
+                                            new Color3f(region.red / 255.f, region.green / 255.f, region.blue / 255.f));
                                 }
                                 //System.out.println(new Point3f(region.rx, region.ry, region.rz));
                             }
@@ -109,25 +110,4 @@ public class VisualizationComponent {
         }
     }
 
-    private BufferedImage convertRawRgbToImage(int width, int height,int[] inputColors) {
-        BufferedImage leftImage = new BufferedImage(width, height,
-                BufferedImage.TYPE_INT_ARGB);
-        int[] leftColors = ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData();
-        for (int i = 0; i < width * height; i++) {
-            leftColors[i] = inputColors[i];
-        }
-        return leftImage;
-    }
-
-    public BufferedImage convertImage(BufferedImage inputImage) {
-        int type = inputImage.getType();
-        if(type!=BufferedImage.TYPE_INT_ARGB) {
-            BufferedImage tempImage = new BufferedImage(inputImage.getWidth(),inputImage.getHeight(),BufferedImage.TYPE_INT_ARGB);
-            Graphics g = tempImage.createGraphics();
-            g.drawImage(inputImage,0,0,null);
-            g.dispose();
-            inputImage = tempImage;
-        }
-        return inputImage;
-    }
 }
