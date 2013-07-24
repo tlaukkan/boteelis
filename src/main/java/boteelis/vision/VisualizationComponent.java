@@ -70,10 +70,14 @@ public class VisualizationComponent {
             try {
                 if (context.analyzedFrames.size() > 0) {
                     final StereoFrame stereoFrame = context.analyzedFrames.poll();
-                    final BufferedImage leftImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.leftRawRgb);
-                    final BufferedImage rightImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.rightRawRgb);
-                    final BufferedImage regionImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.regionsRawRgb);
-                    final BufferedImage correlationImage = ImageConvert.convertRawRgbToImage(stereoFrame.width, stereoFrame.height, stereoFrame.correlationsRawRgb);
+                    final BufferedImage leftImage = ImageConvert.convertRawRgbToImage(
+                            stereoFrame.width, stereoFrame.height, stereoFrame.leftRawRgb);
+                    final BufferedImage rightImage = ImageConvert.convertRawRgbToImage(
+                            stereoFrame.width, stereoFrame.height, stereoFrame.rightRawRgb);
+                    final BufferedImage regionImage = ImageConvert.convertRawRgbToImage(
+                            stereoFrame.width, stereoFrame.height, stereoFrame.regionsRawRgb);
+                    final BufferedImage correlationImage = ImageConvert.convertRawRgbToImage(
+                            stereoFrame.width, stereoFrame.height, stereoFrame.correlationsRawRgb);
 
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
@@ -85,10 +89,14 @@ public class VisualizationComponent {
 
                             for (final Region region : stereoFrame.regions) {
                                 if (region.stereoCorrelation > 0.95) {
-                                    panel3d.addPoint(new Point3f(region.rx, region.ry, region.rz),
-                                            new Color3f(region.red / 255.f, region.green / 255.f, region.blue / 255.f));
+                                    panel3d.addPoint(
+                                            new Point3f(region.rx, region.ry, region.rz),
+                                            new Color3f(
+                                                    region.red / 255.f,
+                                                    region.green / 255.f,
+                                                    region.blue / 255.f
+                                            ));
                                 }
-                                //System.out.println(new Point3f(region.rx, region.ry, region.rz));
                             }
                             panel3d.drawPoints();
                         }

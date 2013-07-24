@@ -30,19 +30,11 @@ public class StereoFrame {
         if (turn) {
             this.leftRawRgb = new int[captureWidth*captureHeight];
             this.rightRawRgb = new int[captureWidth*captureHeight];
-            /*for (int x = 0; x < captureWidth; x++) {
-                for (int y = 0; y < captureHeight; y++) {
-                    this.leftRawRgb[captureHeight  - 1 - y + x * captureHeight] = leftRawRgb[x + y * captureWidth];
-                    this.rightRawRgb[captureHeight - 1 - y + x * captureHeight] = rightRawRgb[x + y * captureWidth];
-                }
-            }*/
             this.height = captureWidth;
             this.width = captureHeight;
         } else {
             this.width = captureWidth;
             this.height = captureHeight;
-            /*this.leftRawRgb = leftRawRgb;
-            this.rightRawRgb = rightRawRgb;*/
         }
         this.leftRawRgb = new int[this.width*this.height];
         this.rightRawRgb = new int[this.width*this.height];
@@ -92,8 +84,6 @@ public class StereoFrame {
 
         return color;
     }
-
-    public float[] gradient;
 
     public final LinkedList<Region> regions = new LinkedList<Region>();
 

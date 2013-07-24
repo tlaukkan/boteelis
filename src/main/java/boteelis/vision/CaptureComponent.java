@@ -107,7 +107,8 @@ public class CaptureComponent {
                             context.captureWidth, context.captureHeight, context.turn);
                 }
 
-                context.currentCaptureFrame.addCapture(((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData(),
+                context.currentCaptureFrame.addCapture(
+                        ((DataBufferInt) leftImage.getRaster().getDataBuffer()).getData(),
                         ((DataBufferInt) rightImage.getRaster().getDataBuffer()).getData());
 
                 if (context.capturedFrames.size() == 0 && context.currentCaptureFrame.captureCount > 5) {
